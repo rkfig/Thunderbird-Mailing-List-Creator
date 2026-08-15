@@ -25,6 +25,11 @@
 - Selected recipients are added to the new list.
 - Temporary open-for-review behavior uses supported API or fallback notification.
 
+## checkpoint-06-settings-or-defer-doc
+- Options page implemented via options_ui.
+- openForReviewAfterCreate setting added and wired.
+- Settings feasibility documented.
+
 ## Tagging Convention
 - stable-01 maps to checkpoint-01-bootstrap.
 - stable-02 maps to checkpoint-02-toolbar-selection-gate.

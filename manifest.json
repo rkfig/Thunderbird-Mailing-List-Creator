@@ -13,7 +13,8 @@
     "accountsRead",
     "addressBooks",
     "messagesRead",
-    "notifications"
+    "notifications",
+    "storage"
   ],
   "background": {
     "scripts": [
@@ -22,6 +23,10 @@
   },
   "browser_action": {
     "default_title": "Mailing List"
+  },
+  "options_ui": {
+    "page": "src/options/index.html",
+    "open_in_tab": true
   },
   "icons": {}
 }

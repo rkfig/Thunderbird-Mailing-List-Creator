@@ -187,6 +187,11 @@ async function verifyListCreated(listId) {
 }
 
 async function openListForReviewIfSupported(createdList) {
+  const settings = await browser.storage.local.get("openForReviewAfterCreate");
+  if (settings.openForReviewAfterCreate === false) {
+    return;
+  }
+
   if (browser.addressBooks.openUI) {
     try {
       await browser.addressBooks.openUI(createdList.id);

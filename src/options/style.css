@@ -1,0 +1,41 @@
+:root {
+  --bg: #f7fafc;
+  --panel: #ffffff;
+  --text: #1f2937;
+  --border: #cbd5e1;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: "Noto Sans", "Liberation Sans", sans-serif;
+  background: linear-gradient(130deg, #f0f9ff 0%, var(--bg) 55%);
+  color: var(--text);
+}
+
+main {
+  max-width: 700px;
+  margin: 0 auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 1.4rem;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1.45;
+}
+
+#status {
+  min-height: 20px;
+  margin-top: 14px;
+  color: #0f766e;
+}
