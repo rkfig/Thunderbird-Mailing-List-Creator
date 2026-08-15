@@ -178,19 +178,35 @@ function findMailingListByName(addressBooks, desiredName) {
 }
 
 async function createMailingList(parentId, listName) {
-  try {
-    return await browser.addressBooks.createList({
-      parentId,
+  if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.create) {
+    const listId = await browser.addressBooks.mailingLists.create(parentId, {
       name: listName,
     });
-  } catch (_firstError) {
-    return browser.addressBooks.createList(parentId, listName);
+    return {
+      id: listId,
+      name: listName,
+      parentId,
+    };
   }
+
+  if (browser.mailingLists && browser.mailingLists.create) {
+    const created = await browser.mailingLists.create(parentId, { name: listName });
+    if (created && created.id) {
+      return created;
+    }
+    return {
+      id: created,
+      name: listName,
+      parentId,
+    };
+  }
+
+  throw new Error("Mailing list create API is unavailable in this Thunderbird build.");
 }
 
 async function deleteExistingMailingList(listId) {
-  if (browser.addressBooks.deleteList) {
-    await browser.addressBooks.deleteList(listId);
+  if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.delete) {
+    await browser.addressBooks.mailingLists.delete(listId);
     return;
   }
 
@@ -203,23 +219,53 @@ async function deleteExistingMailingList(listId) {
 }
 
 async function addContactToList(listId, recipient) {
-  const name = recipient.name || recipient.address;
-
-  try {
-    await browser.addressBooks.addContact({
-      listId,
-      displayName: name,
-      primaryEmail: recipient.address,
-    });
-  } catch (_firstError) {
-    await browser.addressBooks.addContact(listId, {
-      displayName: name,
-      primaryEmail: recipient.address,
-    });
+  if (!recipient || !recipient.address) {
+    return;
   }
+
+  const safeName = String(recipient.name || recipient.address)
+    .replace(/\\/g, "\\\\")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;")
+    .replace(/\n/g, "\\n");
+  const safeEmail = String(recipient.address).trim();
+
+  const contactsApi = browser.addressBooks && browser.addressBooks.contacts;
+  const mailingListsApi = browser.addressBooks && browser.addressBooks.mailingLists;
+
+  if (contactsApi && contactsApi.create && mailingListsApi && mailingListsApi.get && mailingListsApi.addMember) {
+    const listNode = await mailingListsApi.get(listId);
+    if (!listNode || !listNode.parentId) {
+      throw new Error("Unable to resolve mailing list parent address book.");
+    }
+
+    const vCard = `BEGIN:VCARD\nVERSION:4.0\nFN:${safeName}\nEMAIL:${safeEmail}\nEND:VCARD`;
+    const contactId = await contactsApi.create(listNode.parentId, vCard);
+    await mailingListsApi.addMember(listId, contactId);
+    return;
+  }
+
+  if (browser.addressBooks && browser.addressBooks.addContact) {
+    await browser.addressBooks.addContact(listId, {
+      displayName: recipient.name || recipient.address,
+      primaryEmail: safeEmail,
+    });
+    return;
+  }
+
+  throw new Error("Contact create/member-add API is unavailable in this Thunderbird build.");
 }
 
 async function verifyListCreated(listId) {
+  if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.get) {
+    try {
+      const list = await browser.addressBooks.mailingLists.get(listId);
+      return Boolean(list && list.id);
+    } catch (_error) {
+      return false;
+    }
+  }
+
   const books = await listAddressBooks();
   for (const book of books) {
     const mailingLists = Array.isArray(book.mailingLists) ? book.mailingLists : [];
