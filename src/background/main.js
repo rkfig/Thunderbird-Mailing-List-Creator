@@ -1,6 +1,8 @@
 /* global browser */
 
 const pendingContexts = new Map();
+const CONTEXT_TTL_MS = 10 * 60 * 1000;
+const OPEN_FOR_REVIEW_SETTING_KEY = "openForReviewAfterCreate";
 
 function generateContextToken() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -85,31 +87,74 @@ function normalizeUniqueRecipients(recipients) {
   return Array.from(byAddress.values());
 }
 
-function validateListName(rawName) {
-  const trimmed = String(rawName || "").trim();
-  if (!trimmed) {
-    return { ok: false, code: "NO_NAME", message: "No Mailing List Name entered" };
+function prunePendingContexts() {
+  const now = Date.now();
+  for (const [contextToken, context] of pendingContexts.entries()) {
+    if (!context || !context.createdAt || now - context.createdAt > CONTEXT_TTL_MS) {
+      pendingContexts.delete(contextToken);
+    }
   }
+}
 
-  const forbiddenMatch = trimmed.match(/[^a-zA-Z0-9 _\-.]/);
-  if (forbiddenMatch) {
+function filterRecipientsAgainstContext(contextRecipients, selectedRecipients) {
+  const allowed = new Set(
+    normalizeUniqueRecipients(contextRecipients).map((recipient) => recipient.address.toLowerCase())
+  );
+
+  const normalized = normalizeUniqueRecipients(selectedRecipients);
+  return normalized.filter((recipient) => allowed.has(recipient.address.toLowerCase()));
+}
+
+function validateListName(rawName) {
+  try {
+    const trimmed = String(rawName || "").trim();
+    if (!trimmed) {
+      return { ok: false, code: "NO_NAME", message: "No Mailing List Name entered" };
+    }
+
+    if (/[\u0000-\u001f\u007f]/.test(trimmed)) {
+      return {
+        ok: false,
+        code: "PARSE_ERROR",
+        message: "Error Parsing Mailing List Name Please Try Another Name",
+      };
+    }
+
+    const forbiddenMatch = trimmed.match(/[^a-zA-Z0-9 _\-.]/);
+    if (forbiddenMatch) {
+      return {
+        ok: false,
+        code: "SPECIAL_CHAR",
+        message: `Special Character Not Allowed: ${forbiddenMatch[0]}`,
+      };
+    }
+
+    if (trimmed.length > 120) {
+      return { ok: false, code: "NAME_TOO_LONG", message: "Mailing List Name is too long" };
+    }
+
+    return { ok: true, name: trimmed };
+  } catch (_error) {
     return {
       ok: false,
-      code: "SPECIAL_CHAR",
-      message: `Special Character Not Allowed: ${forbiddenMatch[0]}`,
+      code: "PARSE_ERROR",
+      message: "Error Parsing Mailing List Name Please Try Another Name",
     };
   }
-
-  if (trimmed.length > 120) {
-    return { ok: false, code: "NAME_TOO_LONG", message: "Mailing List Name is too long" };
-  }
-
-  return { ok: true, name: trimmed };
 }
 
 async function listAddressBooks() {
-  const books = await browser.addressBooks.list(true);
-  return Array.isArray(books) ? books : [];
+  try {
+    const books = await browser.addressBooks.list(true);
+    return Array.isArray(books) ? books : [];
+  } catch (_error) {
+    const books = await browser.addressBooks.list();
+    return Array.isArray(books) ? books : [];
+  }
+}
+
+function pickWritableAddressBook(addressBooks) {
+  return addressBooks.find((book) => !book.readOnly) || addressBooks[0] || null;
 }
 
 function findMailingListByName(addressBooks, desiredName) {
@@ -187,8 +232,8 @@ async function verifyListCreated(listId) {
 }
 
 async function openListForReviewIfSupported(createdList) {
-  const settings = await browser.storage.local.get("openForReviewAfterCreate");
-  if (settings.openForReviewAfterCreate === false) {
+  const settings = await browser.storage.local.get(OPEN_FOR_REVIEW_SETTING_KEY);
+  if (settings[OPEN_FOR_REVIEW_SETTING_KEY] === false) {
     return;
   }
 
@@ -212,24 +257,22 @@ async function openListForReviewIfSupported(createdList) {
 }
 
 async function hasDisplayedMessage() {
-  const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-  const tab = tabs[0];
-  if (!tab || !tab.id) {
-    return false;
-  }
-
-  const message = await browser.messageDisplay.getDisplayedMessage(tab.id);
+  const message = await getDisplayedMessage();
   return Boolean(message && message.id);
 }
 
 async function getDisplayedMessage() {
-  const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-  const tab = tabs[0];
-  if (!tab || !tab.id) {
+  try {
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const tab = tabs[0];
+    if (!tab || !tab.id) {
+      return null;
+    }
+
+    return await browser.messageDisplay.getDisplayedMessage(tab.id);
+  } catch (_error) {
     return null;
   }
-
-  return browser.messageDisplay.getDisplayedMessage(tab.id);
 }
 
 async function extractRecipients(messageId) {
@@ -254,6 +297,8 @@ async function extractRecipients(messageId) {
 
 async function onToolbarClicked() {
   try {
+    prunePendingContexts();
+
     const selected = await hasDisplayedMessage();
     if (!selected) {
       await notify("no-selected-email", "Select an email first to create a mailing list.");
@@ -294,6 +339,8 @@ async function onToolbarClicked() {
 }
 
 async function createMailingListFromSelection(request) {
+  prunePendingContexts();
+
   const contextToken = String(request.contextToken || "");
   const context = pendingContexts.get(contextToken);
   if (!context) {
@@ -305,13 +352,17 @@ async function createMailingListFromSelection(request) {
     return validation;
   }
 
-  let selectedRecipients = Array.isArray(request.selectedRecipients)
+  const incomingSelectedRecipients = Array.isArray(request.selectedRecipients)
     ? request.selectedRecipients
     : [];
-  selectedRecipients = normalizeUniqueRecipients(selectedRecipients);
+  const selectedRecipients = filterRecipientsAgainstContext(
+    context.recipients,
+    incomingSelectedRecipients
+  );
 
   const books = await listAddressBooks();
-  if (books.length === 0) {
+  const targetBook = pickWritableAddressBook(books);
+  if (!targetBook || !targetBook.id) {
     return {
       ok: false,
       code: "NO_ADDRESS_BOOK",
@@ -333,7 +384,7 @@ async function createMailingListFromSelection(request) {
     await deleteExistingMailingList(existing.id);
   }
 
-  const targetParentId = existing ? existing.parentId : books[0].id;
+  const targetParentId = existing ? existing.parentId : targetBook.id;
   const createdList = await createMailingList(targetParentId, validation.name);
 
   if (!createdList || !createdList.id) {

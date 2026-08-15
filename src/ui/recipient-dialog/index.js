@@ -2,6 +2,7 @@
 
 let contextToken = "";
 let recipients = [];
+let isCreating = false;
 
 function parseContextToken() {
   const params = new URLSearchParams(window.location.search);
@@ -16,6 +17,13 @@ function updateSummary() {
 
 function setStatus(message) {
   document.getElementById("statusMessage").textContent = message;
+}
+
+function setCreateInProgress(inProgress) {
+  isCreating = inProgress;
+  const createButton = document.getElementById("createButton");
+  createButton.disabled = inProgress;
+  createButton.textContent = inProgress ? "Creating..." : "Create Mailing List";
 }
 
 function renderRecipients() {
@@ -77,6 +85,11 @@ async function loadContext() {
 }
 
 async function onCreateClicked() {
+  if (isCreating) {
+    return;
+  }
+
+  setCreateInProgress(true);
   setStatus("");
   const listName = document.getElementById("listName").value.trim();
   const selectedRecipients = getSelectedRecipients();
@@ -114,6 +127,7 @@ async function onCreateClicked() {
   if (!response || !response.ok) {
     const detail = response && response.details ? ` (${response.details})` : "";
     setStatus(`${(response && response.message) || "Error Creating Mailing List"}${detail}`);
+    setCreateInProgress(false);
     return;
   }
 
@@ -130,6 +144,7 @@ async function init() {
   document.getElementById("createButton").addEventListener("click", () => {
     onCreateClicked().catch((error) => {
       setStatus(error.message || "Unexpected error.");
+      setCreateInProgress(false);
     });
   });
 

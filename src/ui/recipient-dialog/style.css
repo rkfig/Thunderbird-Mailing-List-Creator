@@ -96,6 +96,11 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 button#cancelButton {
   background: #ffffff;
   color: #0f172a;
