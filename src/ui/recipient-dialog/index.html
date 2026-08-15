@@ -9,16 +9,20 @@
   <body>
     <main>
       <h1>Mailing List</h1>
-      <p>This dialog is scaffolded for Phase 3 implementation.</p>
+      <p>Create a mailing list from the selected message recipients.</p>
       <section>
         <label for="listName">Mailing List Name</label>
-        <input id="listName" type="text" />
+        <input id="listName" type="text" maxlength="120" autocomplete="off" />
       </section>
-      <section id="recipientContainer" aria-live="polite"></section>
+      <section>
+        <p id="recipientSummary" class="summary" aria-live="polite">Loading recipients...</p>
+        <div id="recipientContainer" class="recipient-container" aria-live="polite"></div>
+      </section>
       <div class="actions">
         <button id="createButton" type="button">Create Mailing List</button>
         <button id="cancelButton" type="button">Cancel</button>
       </div>
+      <p id="statusMessage" class="status" aria-live="assertive"></p>
     </main>
     <script src="index.js"></script>
   </body>

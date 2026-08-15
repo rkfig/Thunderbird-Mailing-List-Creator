@@ -1,11 +1,209 @@
 /* global browser */
 
+const pendingContexts = new Map();
+
+function generateContextToken() {
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 function notify(id, message) {
   return browser.notifications.create(id, {
     type: "basic",
     title: "Mailing List Creator",
     message,
   });
+}
+
+function splitMailboxHeader(headerValue) {
+  const parts = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (const char of headerValue) {
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      current += char;
+      continue;
+    }
+
+    if (char === "," && !inQuotes) {
+      const value = current.trim();
+      if (value) {
+        parts.push(value);
+      }
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  const tail = current.trim();
+  if (tail) {
+    parts.push(tail);
+  }
+
+  return parts;
+}
+
+function parseAddressEntry(entry) {
+  const angleMatch = entry.match(/^(.*)<([^>]+)>$/);
+  if (angleMatch) {
+    const name = angleMatch[1].trim().replace(/^"|"$/g, "");
+    const address = angleMatch[2].trim();
+    if (!address.includes("@")) {
+      return null;
+    }
+    return { name, address };
+  }
+
+  const raw = entry.trim().replace(/^"|"$/g, "");
+  if (!raw.includes("@")) {
+    return null;
+  }
+
+  return { name: "", address: raw };
+}
+
+function normalizeUniqueRecipients(recipients) {
+  const byAddress = new Map();
+
+  for (const recipient of recipients) {
+    if (!recipient || !recipient.address) {
+      continue;
+    }
+
+    const key = recipient.address.toLowerCase();
+    if (!byAddress.has(key)) {
+      byAddress.set(key, {
+        name: recipient.name || "",
+        address: recipient.address,
+      });
+    }
+  }
+
+  return Array.from(byAddress.values());
+}
+
+function validateListName(rawName) {
+  const trimmed = String(rawName || "").trim();
+  if (!trimmed) {
+    return { ok: false, code: "NO_NAME", message: "No Mailing List Name entered" };
+  }
+
+  const forbiddenMatch = trimmed.match(/[^a-zA-Z0-9 _\-.]/);
+  if (forbiddenMatch) {
+    return {
+      ok: false,
+      code: "SPECIAL_CHAR",
+      message: `Special Character Not Allowed: ${forbiddenMatch[0]}`,
+    };
+  }
+
+  if (trimmed.length > 120) {
+    return { ok: false, code: "NAME_TOO_LONG", message: "Mailing List Name is too long" };
+  }
+
+  return { ok: true, name: trimmed };
+}
+
+async function listAddressBooks() {
+  const books = await browser.addressBooks.list(true);
+  return Array.isArray(books) ? books : [];
+}
+
+function findMailingListByName(addressBooks, desiredName) {
+  const normalized = desiredName.toLowerCase();
+
+  for (const book of addressBooks) {
+    const mailingLists = Array.isArray(book.mailingLists) ? book.mailingLists : [];
+    for (const list of mailingLists) {
+      const listName = String(list.name || "").toLowerCase();
+      if (listName === normalized) {
+        return {
+          id: list.id,
+          name: list.name,
+          parentId: book.id,
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+async function createMailingList(parentId, listName) {
+  try {
+    return await browser.addressBooks.createList({
+      parentId,
+      name: listName,
+    });
+  } catch (_firstError) {
+    return browser.addressBooks.createList(parentId, listName);
+  }
+}
+
+async function deleteExistingMailingList(listId) {
+  if (browser.addressBooks.deleteList) {
+    await browser.addressBooks.deleteList(listId);
+    return;
+  }
+
+  if (browser.mailingLists && browser.mailingLists.delete) {
+    await browser.mailingLists.delete(listId);
+    return;
+  }
+
+  throw new Error("This Thunderbird build does not expose a mailing-list delete API.");
+}
+
+async function addContactToList(listId, recipient) {
+  const name = recipient.name || recipient.address;
+
+  try {
+    await browser.addressBooks.addContact({
+      listId,
+      displayName: name,
+      primaryEmail: recipient.address,
+    });
+  } catch (_firstError) {
+    await browser.addressBooks.addContact(listId, {
+      displayName: name,
+      primaryEmail: recipient.address,
+    });
+  }
+}
+
+async function verifyListCreated(listId) {
+  const books = await listAddressBooks();
+  for (const book of books) {
+    const mailingLists = Array.isArray(book.mailingLists) ? book.mailingLists : [];
+    if (mailingLists.some((item) => item.id === listId)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function openListForReviewIfSupported(createdList) {
+  if (browser.addressBooks.openUI) {
+    try {
+      await browser.addressBooks.openUI(createdList.id);
+      return;
+    } catch (_openError) {
+      await notify(
+        "mailing-list-open-review",
+        `Mailing list \"${createdList.name}\" created. Open it in Address Book to review.`
+      );
+      return;
+    }
+  }
+
+  await notify(
+    "mailing-list-open-review",
+    `Mailing list \"${createdList.name}\" created. Open it in Address Book to review.`
+  );
 }
 
 async function hasDisplayedMessage() {
@@ -19,6 +217,36 @@ async function hasDisplayedMessage() {
   return Boolean(message && message.id);
 }
 
+async function getDisplayedMessage() {
+  const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+  const tab = tabs[0];
+  if (!tab || !tab.id) {
+    return null;
+  }
+
+  return browser.messageDisplay.getDisplayedMessage(tab.id);
+}
+
+async function extractRecipients(messageId) {
+  const fullMessage = await browser.messages.getFull(messageId);
+  const headers = fullMessage && fullMessage.headers ? fullMessage.headers : {};
+  const toHeaders = Array.isArray(headers.to) ? headers.to : [];
+  const ccHeaders = Array.isArray(headers.cc) ? headers.cc : [];
+
+  const parsed = [];
+  for (const header of [...toHeaders, ...ccHeaders]) {
+    const entries = splitMailboxHeader(String(header));
+    for (const entry of entries) {
+      const recipient = parseAddressEntry(entry);
+      if (recipient) {
+        parsed.push(recipient);
+      }
+    }
+  }
+
+  return normalizeUniqueRecipients(parsed);
+}
+
 async function onToolbarClicked() {
   try {
     const selected = await hasDisplayedMessage();
@@ -27,15 +255,172 @@ async function onToolbarClicked() {
       return;
     }
 
-    await browser.windows.create({
+    const message = await getDisplayedMessage();
+    if (!message || !message.id) {
+      await notify("no-selected-email", "Select an email first to create a mailing list.");
+      return;
+    }
+
+    const recipients = await extractRecipients(message.id);
+    const contextToken = generateContextToken();
+    pendingContexts.set(contextToken, {
+      messageId: message.id,
+      recipients,
+      selectedRecipients: [],
+      createdAt: Date.now(),
+      windowId: null,
+    });
+
+    const popupWindow = await browser.windows.create({
       type: "popup",
-      url: "src/ui/recipient-dialog/index.html",
+      url: `src/ui/recipient-dialog/index.html?contextToken=${encodeURIComponent(contextToken)}`,
       width: 760,
       height: 620,
     });
+
+    const context = pendingContexts.get(contextToken);
+    if (context) {
+      context.windowId = popupWindow.id || null;
+      pendingContexts.set(contextToken, context);
+    }
   } catch (error) {
     await notify("mailing-list-error", `Unable to open Mailing List window: ${error.message || String(error)}`);
   }
 }
+
+async function createMailingListFromSelection(request) {
+  const contextToken = String(request.contextToken || "");
+  const context = pendingContexts.get(contextToken);
+  if (!context) {
+    return { ok: false, code: "NO_CONTEXT", message: "Context unavailable." };
+  }
+
+  const validation = validateListName(request.listName);
+  if (!validation.ok) {
+    return validation;
+  }
+
+  let selectedRecipients = Array.isArray(request.selectedRecipients)
+    ? request.selectedRecipients
+    : [];
+  selectedRecipients = normalizeUniqueRecipients(selectedRecipients);
+
+  const books = await listAddressBooks();
+  if (books.length === 0) {
+    return {
+      ok: false,
+      code: "NO_ADDRESS_BOOK",
+      message: "Error Creating Mailing List: No writable address book found.",
+    };
+  }
+
+  const existing = findMailingListByName(books, validation.name);
+  const overwriteExisting = Boolean(request.overwriteExisting);
+  if (existing && !overwriteExisting) {
+    return {
+      ok: false,
+      code: "LIST_EXISTS",
+      message: "A list with that name already exists. Do you want to overwrite it?",
+    };
+  }
+
+  if (existing && overwriteExisting) {
+    await deleteExistingMailingList(existing.id);
+  }
+
+  const targetParentId = existing ? existing.parentId : books[0].id;
+  const createdList = await createMailingList(targetParentId, validation.name);
+
+  if (!createdList || !createdList.id) {
+    return {
+      ok: false,
+      code: "CREATE_FAILED",
+      message: "Error Creating Mailing List",
+      details: "API did not return a created list identifier.",
+    };
+  }
+
+  const created = await verifyListCreated(createdList.id);
+  if (!created) {
+    return {
+      ok: false,
+      code: "VERIFY_FAILED",
+      message: "Error Creating Mailing List",
+      details: "Verification failed after list creation.",
+    };
+  }
+
+  for (const recipient of selectedRecipients) {
+    await addContactToList(createdList.id, recipient);
+  }
+
+  context.selectedRecipients = selectedRecipients;
+  pendingContexts.set(contextToken, context);
+
+  await openListForReviewIfSupported(createdList);
+
+  return {
+    ok: true,
+    listId: createdList.id,
+    listName: createdList.name,
+    recipientCount: selectedRecipients.length,
+  };
+}
+
+browser.windows.onRemoved.addListener((windowId) => {
+  for (const [contextToken, context] of pendingContexts.entries()) {
+    if (context.windowId === windowId) {
+      pendingContexts.delete(contextToken);
+    }
+  }
+});
+
+browser.runtime.onMessage.addListener((message) => {
+  if (!message || !message.type) {
+    return undefined;
+  }
+
+  if (message.type === "getRecipientContext") {
+    const contextToken = String(message.contextToken || "");
+    const context = pendingContexts.get(contextToken);
+    if (!context) {
+      return Promise.resolve({ ok: false, error: "Context unavailable." });
+    }
+
+    return Promise.resolve({
+      ok: true,
+      recipients: context.recipients,
+      selectedCount: context.selectedRecipients.length,
+    });
+  }
+
+  if (message.type === "saveRecipientSelection") {
+    const contextToken = String(message.contextToken || "");
+    const context = pendingContexts.get(contextToken);
+    if (!context) {
+      return Promise.resolve({ ok: false, error: "Context unavailable." });
+    }
+
+    context.selectedRecipients = Array.isArray(message.selectedRecipients)
+      ? message.selectedRecipients
+      : [];
+    pendingContexts.set(contextToken, context);
+
+    return Promise.resolve({ ok: true });
+  }
+
+  if (message.type === "createMailingList") {
+    return createMailingListFromSelection(message)
+      .then((response) => response)
+      .catch((error) => ({
+        ok: false,
+        code: "UNEXPECTED",
+        message: "Error Creating Mailing List",
+        details: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  return undefined;
+});
 
 browser.browserAction.onClicked.addListener(onToolbarClicked);
