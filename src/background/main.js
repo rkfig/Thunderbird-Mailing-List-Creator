@@ -157,20 +157,48 @@ function pickWritableAddressBook(addressBooks) {
   return addressBooks.find((book) => !book.readOnly) || addressBooks[0] || null;
 }
 
-function findMailingListByName(addressBooks, desiredName) {
-  const normalized = desiredName.toLowerCase();
+async function listMailingListsForBook(parentId, addressBooks) {
+  if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.list) {
+    const lists = await browser.addressBooks.mailingLists.list(parentId);
+    return Array.isArray(lists) ? lists : [];
+  }
 
-  for (const book of addressBooks) {
-    const mailingLists = Array.isArray(book.mailingLists) ? book.mailingLists : [];
-    for (const list of mailingLists) {
-      const listName = String(list.name || "").toLowerCase();
-      if (listName === normalized) {
-        return {
-          id: list.id,
-          name: list.name,
-          parentId: book.id,
-        };
-      }
+  if (browser.mailingLists && browser.mailingLists.list) {
+    try {
+      const lists = await browser.mailingLists.list(parentId);
+      return Array.isArray(lists) ? lists : [];
+    } catch (_firstError) {
+      const lists = await browser.mailingLists.list();
+      const allLists = Array.isArray(lists) ? lists : [];
+      return allLists.filter((list) => list && list.parentId === parentId);
+    }
+  }
+
+  const book = addressBooks.find((candidate) => candidate.id === parentId);
+  const lists = book && Array.isArray(book.mailingLists) ? book.mailingLists : [];
+  return lists;
+}
+
+async function findMailingListByName(parentId, addressBooks, desiredName) {
+  const normalized = String(desiredName || "").trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+
+  const mailingLists = await listMailingListsForBook(parentId, addressBooks);
+  for (const list of mailingLists) {
+    const listName = String(list && list.name ? list.name : "").trim().toLowerCase();
+    const listType = String(list && list.type ? list.type : "");
+    if (listType && listType !== "mailingList") {
+      continue;
+    }
+
+    if (listName === normalized) {
+      return {
+        id: list.id,
+        name: list.name,
+        parentId,
+      };
     }
   }
 
@@ -446,7 +474,7 @@ async function createMailingListFromSelection(request) {
     };
   }
 
-  const existing = findMailingListByName(books, validation.name);
+  const existing = await findMailingListByName(targetBook.id, books, validation.name);
   const overwriteExisting = Boolean(request.overwriteExisting);
   if (existing && !overwriteExisting) {
     return {
