@@ -1,0 +1,27 @@
+{
+  "manifest_version": 2,
+  "name": "Mailing List Creator",
+  "description": "Create Thunderbird mailing lists from selected message recipients.",
+  "version": "2.0.0",
+  "applications": {
+    "gecko": {
+      "id": "mailing-list-creator@example.com",
+      "strict_min_version": "153.0"
+    }
+  },
+  "permissions": [
+    "accountsRead",
+    "addressBooks",
+    "messagesRead",
+    "notifications"
+  ],
+  "background": {
+    "scripts": [
+      "src/background/main.js"
+    ]
+  },
+  "browser_action": {
+    "default_title": "Mailing List"
+  },
+  "icons": {}
+}
