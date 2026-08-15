@@ -245,6 +245,36 @@ async function addContactToList(listId, recipient) {
     return;
   }
 
+  if (browser.contacts && browser.contacts.create && browser.mailingLists && browser.mailingLists.addMember) {
+    let parentId = null;
+    if (browser.mailingLists.get) {
+      const listNode = await browser.mailingLists.get(listId);
+      parentId = listNode && listNode.parentId ? listNode.parentId : null;
+    }
+
+    if (!parentId) {
+      throw new Error("Unable to resolve mailing list parent address book.");
+    }
+
+    let createdContact = null;
+    try {
+      createdContact = await browser.contacts.create(parentId, {
+        DisplayName: recipient.name || recipient.address,
+        PrimaryEmail: safeEmail,
+      });
+    } catch (_firstError) {
+      createdContact = await browser.contacts.create({
+        parentId,
+        DisplayName: recipient.name || recipient.address,
+        PrimaryEmail: safeEmail,
+      });
+    }
+
+    const contactId = createdContact && createdContact.id ? createdContact.id : createdContact;
+    await browser.mailingLists.addMember(listId, contactId);
+    return;
+  }
+
   if (browser.addressBooks && browser.addressBooks.addContact) {
     await browser.addressBooks.addContact(listId, {
       displayName: recipient.name || recipient.address,
