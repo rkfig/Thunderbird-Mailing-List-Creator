@@ -14,3 +14,6 @@
 6. checkpoint-06-settings-or-defer-doc
 7. checkpoint-07-guideline-compliance
 8. checkpoint-08-release-candidate
+
+## Tracking
+- Manual test checklist: tests/manual-test-matrix.md
