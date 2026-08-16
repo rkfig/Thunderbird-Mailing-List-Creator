@@ -30,8 +30,6 @@ Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
 Runtime validation completed on Thunderbird 153.0 (64 bit) on Linux for the main create-list workflow. See tests/manual-test-results-2026-08-15.md for current recorded status.
 
 ## Packaging
-The extension should be packaged from this folder only.
-
 Expected package root contents:
 - manifest.json
 - src/
@@ -39,7 +37,6 @@ Expected package root contents:
 
 Suggested packaging command:
 ```bash
-cd mlc-v2
 mkdir -p dist
 zip -r dist/mailing-list-creator-2.0.0.xpi manifest.json src images -x '*.DS_Store'
 ```
