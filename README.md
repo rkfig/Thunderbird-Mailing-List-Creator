@@ -44,7 +44,6 @@ zip -r dist/mailing-list-creator-2.0.0.xpi manifest.json src images -x '*.DS_Sto
 ## Submission Notes
 Before Mozilla submission:
 - Complete remaining manual validations
-- Review permissions one final time
 
 ## Author
 Ryan Figgins
