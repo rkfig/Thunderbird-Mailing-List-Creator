@@ -1,24 +1,39 @@
+/*
+ * Mailing List Creator - Recipient Dialog Script
+ *
+ * Purpose:
+ * Renders recipient choices, validates user interaction state,
+ * and coordinates create/overwrite requests with the background script.
+ *
+ * Author: Ryan Figgins
+ * Author Email Address: mailing-list-creator@rkfig.com
+ */
+
 /* global browser, window, document */
 
 let contextToken = "";
 let recipients = [];
 let isCreating = false;
 
+// Reads the background-issued context token from the popup URL.
 function parseContextToken() {
   const params = new URLSearchParams(window.location.search);
   return params.get("contextToken") || "";
 }
 
+// Updates the status line showing how many recipients remain selected.
 function updateSummary() {
   const checked = document.querySelectorAll(".recipient-check:checked").length;
   const summary = document.getElementById("recipientSummary");
   summary.textContent = `${checked} of ${recipients.length} recipients selected`;
 }
 
+// Shows user-facing status and error messages.
 function setStatus(message) {
   document.getElementById("statusMessage").textContent = message;
 }
 
+// Prevents duplicate submissions while create flow is in progress.
 function setCreateInProgress(inProgress) {
   isCreating = inProgress;
   const createButton = document.getElementById("createButton");
@@ -26,6 +41,7 @@ function setCreateInProgress(inProgress) {
   createButton.textContent = inProgress ? "Creating..." : "Create Mailing List";
 }
 
+// Draws recipient rows using textContent to keep rendering safe and explicit.
 function renderRecipients() {
   const container = document.getElementById("recipientContainer");
   while (container.firstChild) {
@@ -66,6 +82,7 @@ function renderRecipients() {
   updateSummary();
 }
 
+// Converts checked rows into the payload expected by the background script.
 function getSelectedRecipients() {
   const selectedIndexes = Array.from(document.querySelectorAll(".recipient-check:checked"))
     .map((input) => Number(input.value))
@@ -76,6 +93,7 @@ function getSelectedRecipients() {
     .filter((recipient) => Boolean(recipient && recipient.address));
 }
 
+// Pulls recipient context data generated from currently selected messages.
 async function loadContext() {
   const response = await browser.runtime.sendMessage({
     type: "getRecipientContext",
@@ -89,6 +107,7 @@ async function loadContext() {
   recipients = Array.isArray(response.recipients) ? response.recipients : [];
 }
 
+// Orchestrates create flow including duplicate-name overwrite confirmations.
 async function onCreateClicked() {
   if (isCreating) {
     return;
@@ -142,6 +161,7 @@ async function onCreateClicked() {
   }, 700);
 }
 
+// Wires event handlers and performs initial context load.
 async function init() {
   document.getElementById("cancelButton").addEventListener("click", () => {
     window.close();

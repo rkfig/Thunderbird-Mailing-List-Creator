@@ -1,13 +1,27 @@
+/*
+ * Mailing List Creator - Background Script
+ *
+ * Purpose:
+ * Coordinates toolbar actions, selected-message recipient extraction,
+ * mailing list creation, overwrite handling, and contact population.
+ *
+ * Author: Ryan Figgins
+ * Author Email Address: mailing-list-creator@rkfig.com
+ */
+
 /* global browser */
 
+// In-memory contexts tie popup windows to selected message data and user choices.
 const pendingContexts = new Map();
 const CONTEXT_TTL_MS = 10 * 60 * 1000;
 const OPEN_FOR_REVIEW_SETTING_KEY = "openForReviewAfterCreate";
 
+// Generates a short-lived token used to map popup interactions to one action context.
 function generateContextToken() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+// Shows user-visible notifications for success/failure and guidance.
 function notify(id, message) {
   return browser.notifications.create(id, {
     type: "basic",
@@ -16,6 +30,7 @@ function notify(id, message) {
   });
 }
 
+// Splits a mailbox header while preserving commas inside quoted names.
 function splitMailboxHeader(headerValue) {
   const parts = [];
   let current = "";
@@ -48,6 +63,7 @@ function splitMailboxHeader(headerValue) {
   return parts;
 }
 
+// Converts a raw recipient string into a normalized object.
 function parseAddressEntry(entry) {
   const angleMatch = entry.match(/^(.*)<([^>]+)>$/);
   if (angleMatch) {
@@ -67,6 +83,7 @@ function parseAddressEntry(entry) {
   return { name: "", address: raw };
 }
 
+// Deduplicates recipients by normalized email address.
 function normalizeUniqueRecipients(recipients) {
   const byAddress = new Map();
 
@@ -87,6 +104,7 @@ function normalizeUniqueRecipients(recipients) {
   return Array.from(byAddress.values());
 }
 
+// Clears stale popup contexts to avoid leaking in-memory state.
 function prunePendingContexts() {
   const now = Date.now();
   for (const [contextToken, context] of pendingContexts.entries()) {
@@ -96,6 +114,7 @@ function prunePendingContexts() {
   }
 }
 
+// Accepts only recipients that were part of the originally collected context.
 function filterRecipientsAgainstContext(contextRecipients, selectedRecipients) {
   const allowed = new Set(
     normalizeUniqueRecipients(contextRecipients).map((recipient) => recipient.address.toLowerCase())
@@ -105,6 +124,7 @@ function filterRecipientsAgainstContext(contextRecipients, selectedRecipients) {
   return normalized.filter((recipient) => allowed.has(recipient.address.toLowerCase()));
 }
 
+// Enforces naming rules and returns user-facing validation messages.
 function validateListName(rawName) {
   try {
     const trimmed = String(rawName || "").trim();
@@ -143,6 +163,7 @@ function validateListName(rawName) {
   }
 }
 
+// Reads address books with compatibility fallback for differing API shapes.
 async function listAddressBooks() {
   try {
     const books = await browser.addressBooks.list(true);
@@ -153,10 +174,12 @@ async function listAddressBooks() {
   }
 }
 
+// Picks the first writable address book, falling back to the first available book.
 function pickWritableAddressBook(addressBooks) {
   return addressBooks.find((book) => !book.readOnly) || addressBooks[0] || null;
 }
 
+// Lists mailing lists for one address book using modern or legacy APIs.
 async function listMailingListsForBook(parentId, addressBooks) {
   if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.list) {
     const lists = await browser.addressBooks.mailingLists.list(parentId);
@@ -179,6 +202,7 @@ async function listMailingListsForBook(parentId, addressBooks) {
   return lists;
 }
 
+// Finds an existing list by exact case-insensitive name in the target address book.
 async function findMailingListByName(parentId, addressBooks, desiredName) {
   const normalized = String(desiredName || "").trim().toLowerCase();
   if (!normalized) {
@@ -205,6 +229,7 @@ async function findMailingListByName(parentId, addressBooks, desiredName) {
   return null;
 }
 
+// Creates a mailing list using the most specific API exposed by this Thunderbird build.
 async function createMailingList(parentId, listName) {
   if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.create) {
     const listId = await browser.addressBooks.mailingLists.create(parentId, {
@@ -232,6 +257,7 @@ async function createMailingList(parentId, listName) {
   throw new Error("Mailing list create API is unavailable in this Thunderbird build.");
 }
 
+// Deletes an existing mailing list when overwrite is confirmed.
 async function deleteExistingMailingList(listId) {
   if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.delete) {
     await browser.addressBooks.mailingLists.delete(listId);
@@ -246,6 +272,7 @@ async function deleteExistingMailingList(listId) {
   throw new Error("This Thunderbird build does not expose a mailing-list delete API.");
 }
 
+// Adds one recipient to a list through modern or legacy contact/list APIs.
 async function addContactToList(listId, recipient) {
   if (!recipient || !recipient.address) {
     return;
@@ -314,6 +341,7 @@ async function addContactToList(listId, recipient) {
   throw new Error("Contact create/member-add API is unavailable in this Thunderbird build.");
 }
 
+// Verifies list creation by querying either direct list APIs or address book trees.
 async function verifyListCreated(listId) {
   if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.get) {
     try {
@@ -335,6 +363,7 @@ async function verifyListCreated(listId) {
   return false;
 }
 
+// During active development, optionally open or notify for post-create review.
 async function openListForReviewIfSupported(createdList) {
   const settings = await browser.storage.local.get(OPEN_FOR_REVIEW_SETTING_KEY);
   if (settings[OPEN_FOR_REVIEW_SETTING_KEY] === false) {
@@ -360,11 +389,13 @@ async function openListForReviewIfSupported(createdList) {
   );
 }
 
+// Checks whether any selected/displated message context is available.
 async function hasDisplayedMessage() {
   const messages = await getSelectedOrDisplayedMessages();
   return messages.length > 0;
 }
 
+// Collects selected messages first, then falls back to the displayed message.
 async function getSelectedOrDisplayedMessages() {
   try {
     const tabs = await browser.tabs.query({ active: true, currentWindow: true });
@@ -414,6 +445,7 @@ async function getSelectedOrDisplayedMessages() {
   }
 }
 
+// Aggregates To/CC recipients across all selected messages.
 async function extractRecipients(messages) {
   const parsed = [];
   for (const message of messages) {
@@ -440,6 +472,7 @@ async function extractRecipients(messages) {
   return normalizeUniqueRecipients(parsed);
 }
 
+// Entry point for toolbar button clicks.
 async function onToolbarClicked() {
   try {
     prunePendingContexts();
@@ -483,6 +516,7 @@ async function onToolbarClicked() {
   }
 }
 
+// Handles validation, overwrite checks, create/verify, and recipient insertion.
 async function createMailingListFromSelection(request) {
   prunePendingContexts();
 
@@ -568,6 +602,7 @@ async function createMailingListFromSelection(request) {
   };
 }
 
+// Ensures popup context is removed if user closes the popup window.
 browser.windows.onRemoved.addListener((windowId) => {
   for (const [contextToken, context] of pendingContexts.entries()) {
     if (context.windowId === windowId) {
@@ -576,6 +611,7 @@ browser.windows.onRemoved.addListener((windowId) => {
   }
 });
 
+// Runtime message router for popup -> background requests.
 browser.runtime.onMessage.addListener((message) => {
   if (!message || !message.type) {
     return undefined;
@@ -624,4 +660,5 @@ browser.runtime.onMessage.addListener((message) => {
   return undefined;
 });
 
+// Register toolbar click handler.
 browser.browserAction.onClicked.addListener(onToolbarClicked);

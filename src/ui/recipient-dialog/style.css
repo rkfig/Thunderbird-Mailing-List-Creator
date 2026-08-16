@@ -1,3 +1,11 @@
+/*
+ * Mailing List Creator - Recipient Dialog Styles
+ *
+ * Purpose: Visual layout and component styling for recipient selection UI.
+ * Author: Ryan Figgins
+ * Author Email Address: mailing-list-creator@rkfig.com
+ */
+
 :root {
   --bg: #f3f5f7;
   --panel: #ffffff;
