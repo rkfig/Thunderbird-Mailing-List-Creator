@@ -3,9 +3,10 @@
   "name": "Mailing List Creator",
   "description": "Create Thunderbird mailing lists from selected message recipients.",
   "version": "2.0.0",
+  "author": "Ryan Figgins",
   "browser_specific_settings": {
     "gecko": {
-      "id": "mailing-list-creator@example.com",
+      "id": "mailing-list-creator@rkfig.com",
       "strict_min_version": "153.0"
     }
   },
