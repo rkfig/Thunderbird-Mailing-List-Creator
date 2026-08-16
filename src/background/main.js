@@ -361,37 +361,78 @@ async function openListForReviewIfSupported(createdList) {
 }
 
 async function hasDisplayedMessage() {
-  const message = await getDisplayedMessage();
-  return Boolean(message && message.id);
+  const messages = await getSelectedOrDisplayedMessages();
+  return messages.length > 0;
 }
 
-async function getDisplayedMessage() {
+async function getSelectedOrDisplayedMessages() {
   try {
     const tabs = await browser.tabs.query({ active: true, currentWindow: true });
     const tab = tabs[0];
     if (!tab || !tab.id) {
-      return null;
+      return [];
     }
 
-    return await browser.messageDisplay.getDisplayedMessage(tab.id);
+    const messages = [];
+
+    if (browser.mailTabs && browser.mailTabs.getSelectedMessages) {
+      try {
+        let messageList = await browser.mailTabs.getSelectedMessages(tab.id);
+        while (messageList) {
+          if (Array.isArray(messageList.messages)) {
+            messages.push(...messageList.messages);
+          }
+
+          if (!messageList.id || !browser.messages || !browser.messages.continueList) {
+            break;
+          }
+
+          messageList = await browser.messages.continueList(messageList.id);
+        }
+      } catch (_selectionError) {
+        // Fall back to displayed message path.
+      }
+    }
+
+    if (messages.length === 0 && browser.messageDisplay && browser.messageDisplay.getDisplayedMessage) {
+      const displayedMessage = await browser.messageDisplay.getDisplayedMessage(tab.id);
+      if (displayedMessage && displayedMessage.id) {
+        messages.push(displayedMessage);
+      }
+    }
+
+    const uniqueById = new Map();
+    for (const message of messages) {
+      if (message && message.id && !uniqueById.has(message.id)) {
+        uniqueById.set(message.id, message);
+      }
+    }
+
+    return Array.from(uniqueById.values());
   } catch (_error) {
-    return null;
+    return [];
   }
 }
 
-async function extractRecipients(messageId) {
-  const fullMessage = await browser.messages.getFull(messageId);
-  const headers = fullMessage && fullMessage.headers ? fullMessage.headers : {};
-  const toHeaders = Array.isArray(headers.to) ? headers.to : [];
-  const ccHeaders = Array.isArray(headers.cc) ? headers.cc : [];
-
+async function extractRecipients(messages) {
   const parsed = [];
-  for (const header of [...toHeaders, ...ccHeaders]) {
-    const entries = splitMailboxHeader(String(header));
-    for (const entry of entries) {
-      const recipient = parseAddressEntry(entry);
-      if (recipient) {
-        parsed.push(recipient);
+  for (const message of messages) {
+    if (!message || !message.id) {
+      continue;
+    }
+
+    const fullMessage = await browser.messages.getFull(message.id);
+    const headers = fullMessage && fullMessage.headers ? fullMessage.headers : {};
+    const toHeaders = Array.isArray(headers.to) ? headers.to : [];
+    const ccHeaders = Array.isArray(headers.cc) ? headers.cc : [];
+
+    for (const header of [...toHeaders, ...ccHeaders]) {
+      const entries = splitMailboxHeader(String(header));
+      for (const entry of entries) {
+        const recipient = parseAddressEntry(entry);
+        if (recipient) {
+          parsed.push(recipient);
+        }
       }
     }
   }
@@ -409,16 +450,16 @@ async function onToolbarClicked() {
       return;
     }
 
-    const message = await getDisplayedMessage();
-    if (!message || !message.id) {
+    const selectedMessages = await getSelectedOrDisplayedMessages();
+    if (selectedMessages.length === 0) {
       await notify("no-selected-email", "Select an email first to create a mailing list.");
       return;
     }
 
-    const recipients = await extractRecipients(message.id);
+    const recipients = await extractRecipients(selectedMessages);
     const contextToken = generateContextToken();
     pendingContexts.set(contextToken, {
-      messageId: message.id,
+      messageIds: selectedMessages.map((message) => message.id),
       recipients,
       selectedRecipients: [],
       createdAt: Date.now(),

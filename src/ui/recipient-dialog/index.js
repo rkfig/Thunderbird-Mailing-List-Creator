@@ -28,10 +28,15 @@ function setCreateInProgress(inProgress) {
 
 function renderRecipients() {
   const container = document.getElementById("recipientContainer");
-  container.innerHTML = "";
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
 
   if (recipients.length === 0) {
-    container.innerHTML = '<p class="empty">No To/CC addresses were found in the selected email.</p>';
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.textContent = "No To/CC addresses were found in the selected email.";
+    container.appendChild(empty);
     const summary = document.getElementById("recipientSummary");
     summary.textContent = "0 of 0 recipients selected";
     return;
