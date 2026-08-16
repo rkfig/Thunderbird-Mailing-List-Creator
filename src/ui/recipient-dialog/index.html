@@ -23,8 +23,18 @@
       <h1>Mailing List</h1>
       <p>Create a mailing list from the selected message recipients.</p>
       <section>
+        <label for="addressBookSelect">Address Book</label>
+        <select id="addressBookSelect"></select>
+      </section>
+      <section>
         <label for="listName">Mailing List Name</label>
-        <input id="listName" type="text" maxlength="120" autocomplete="off" />
+        <input
+          id="listName"
+          type="text"
+          maxlength="120"
+          autocomplete="off"
+          placeholder="Enter Name Here"
+        />
       </section>
       <section>
         <p id="recipientSummary" class="summary" aria-live="polite">Loading recipients...</p>

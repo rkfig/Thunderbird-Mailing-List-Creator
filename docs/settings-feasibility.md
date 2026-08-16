@@ -1,14 +1,13 @@
 # Settings Feasibility
 
-Status: Implemented
+Status: Superseded
 
-A lightweight settings page is feasible and now included using Manifest v2 options_ui and storage.local.
+A separate settings page is no longer included in this extension.
 
-## Current Setting
-- openForReviewAfterCreate
-  - Default: true
-  - Purpose: Controls temporary post-create behavior that opens/alerts for list review.
+## Current Behavior
+- Address-book selection is handled directly in the create dialog.
+- No persistent settings are required for the current flow.
 
 ## Rationale
-- Meets requirement to keep review-opening logic easy to remove after active development.
-- Avoids OS-specific features and stays Thunderbird/WebExtension compatible.
+- The simpler flow reduces review surface area and removes an unnecessary options page.
+- The extension remains Thunderbird/WebExtension compatible without any storage-backed settings.

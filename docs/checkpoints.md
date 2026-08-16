@@ -12,8 +12,9 @@
 - Popup opens only when a message context exists.
 
 ## checkpoint-03-recipient-dialog
-- Popup loads To/CC recipients from selected message context.
+- Popup loads To/CC/BCC recipients from selected message context.
 - Recipient controls are selected by default and can be toggled.
+- Address-book dropdown is shown and defaults to a writable address book.
 - List name entry plus create/cancel actions are wired.
 
 ## checkpoint-04-name-validation-overwrite
@@ -23,12 +24,12 @@
 ## checkpoint-05-create-verify-populate-open
 - Create list operation implemented with verification step.
 - Selected recipients are added to the new list.
-- Temporary open-for-review behavior uses supported API or fallback notification.
+- Selected address book is used for list creation.
 
 ## checkpoint-06-settings-or-defer-doc
-- Options page implemented via options_ui.
-- openForReviewAfterCreate setting added and wired.
-- Settings feasibility documented.
+- Options page removed after the flow was simplified.
+- No settings page remains in the extension.
+- Address-book selection is handled directly in the create dialog.
 
 ## checkpoint-07-guideline-compliance
 - Runtime hardening added for context lifecycle and API fallback behavior.

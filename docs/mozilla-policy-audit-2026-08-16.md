@@ -19,7 +19,7 @@ Overall Result:
 - Policy mapping: Add-on Policies 3.1 Source Code Submission; Source code submission checklist
 - Current state:
   - Build packaging exists in README and docs/packaging-and-submission-notes.md.
-  - There is no dedicated source-submission README/checklist that explicitly states reviewer environment assumptions, exact reproducible commands, and tool version pinning strategy in source-submission format.
+  - The repository now includes dedicated source-submission instructions, but the upload bundle still needs to be matched to the final submission artifact.
 - Impact:
   - Can cause review delay/rejection if reviewer asks for source package details in required format.
 - Recommendation:
@@ -29,7 +29,7 @@ Overall Result:
 - Severity: Medium
 - Policy mapping: Add-on Policies 1 (No Surprises), 2 (Content), 3 (Submission Guidelines)
 - Current state:
-  - README describes behavior, but final listing text/screenshots and payment/disclosure attestations are still pending in release checklist.
+  - README and ATN listing package describe behavior, but final screenshots and submission upload are still pending in release checklist.
 - Impact:
   - Review can be delayed or rejected if listing metadata does not fully match runtime behavior and disclosure requirements.
 - Recommendation:
@@ -39,7 +39,7 @@ Overall Result:
 
 1. Least privilege permissions
 - Status: Pass
-- Evidence: manifest permissions limited to addressBooks, messagesRead, notifications, storage.
+- Evidence: manifest permissions limited to addressBooks, messagesRead, notifications.
 
 2. No remote code execution/loading
 - Status: Pass
@@ -87,12 +87,13 @@ Overall Result:
 - src/background/main.js
 - src/ui/recipient-dialog/index.js
 - src/ui/recipient-dialog/index.html
-- src/options/index.js
 - README.md
 - docs/packaging-and-submission-notes.md
 - docs/github-mozilla-release-checklist.md
 - docs/mozilla-thunderbird-compliance-checklist.md
 - tests/manual-test-results-2026-08-15.md
+- docs/atn-listing-content-package.md
+- docs/source-code-submission-instructions.md
 
 ## Auditor Note
 

@@ -38,11 +38,11 @@ function splitMailboxHeader(headerValue) {
   let current = "";
   let inQuotes = false;
 
-  for (const char of headerValue) {
+  String(headerValue || "").split("").forEach((char) => {
     if (char === '"') {
       inQuotes = !inQuotes;
       current += char;
-      continue;
+      return;
     }
 
     if (char === "," && !inQuotes) {
@@ -51,11 +51,11 @@ function splitMailboxHeader(headerValue) {
         parts.push(value);
       }
       current = "";
-      continue;
+      return;
     }
 
     current += char;
-  }
+  });
 
   const tail = current.trim();
   if (tail) {
@@ -89,9 +89,9 @@ function parseAddressEntry(entry) {
 function normalizeUniqueRecipients(recipients) {
   const byAddress = new Map();
 
-  for (const recipient of recipients) {
+  recipients.forEach((recipient) => {
     if (!recipient || !recipient.address) {
-      continue;
+      return;
     }
 
     const key = recipient.address.toLowerCase();
@@ -101,7 +101,7 @@ function normalizeUniqueRecipients(recipients) {
         address: recipient.address,
       });
     }
-  }
+  });
 
   return Array.from(byAddress.values());
 }
@@ -109,11 +109,11 @@ function normalizeUniqueRecipients(recipients) {
 // Clears stale popup contexts to avoid leaking in-memory state.
 function prunePendingContexts() {
   const now = Date.now();
-  for (const [contextToken, context] of pendingContexts.entries()) {
+  pendingContexts.forEach((context, contextToken) => {
     if (!context || !context.createdAt || now - context.createdAt > CONTEXT_TTL_MS) {
       pendingContexts.delete(contextToken);
     }
-  }
+  });
 }
 
 // Accepts only recipients that were part of the originally collected context.
@@ -176,15 +176,28 @@ async function listAddressBooks() {
   }
 }
 
-// Picks the first writable address book, falling back to the first available book.
+// Picks the first writable address book.
 function pickWritableAddressBook(addressBooks) {
-  return addressBooks.find((book) => !book.readOnly) || addressBooks[0] || null;
+  return addressBooks.find((book) => book && book.id && !book.readOnly) || null;
+}
+
+// Reduces address books to popup-safe option objects and keeps writable books only.
+function toAddressBookOptions(addressBooks) {
+  return addressBooks
+    .filter((book) => book && book.id && !book.readOnly)
+    .map((book) => ({
+      id: book.id,
+      name: String(book.name || "Unnamed Address Book"),
+    }));
 }
 
 // Lists mailing lists for one address book using modern or legacy APIs.
 async function listMailingListsForBook(parentId, addressBooks) {
-  if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.list) {
-    const lists = await browser.addressBooks.mailingLists.list(parentId);
+  const addressBooksApi = browser.addressBooks;
+  const mailingListsApi = addressBooksApi && addressBooksApi.mailingLists;
+
+  if (mailingListsApi && mailingListsApi.list) {
+    const lists = await mailingListsApi.list(parentId);
     return Array.isArray(lists) ? lists : [];
   }
 
@@ -212,29 +225,30 @@ async function findMailingListByName(parentId, addressBooks, desiredName) {
   }
 
   const mailingLists = await listMailingListsForBook(parentId, addressBooks);
-  for (const list of mailingLists) {
+  const match = mailingLists.find((list) => {
     const listName = String(list && list.name ? list.name : "").trim().toLowerCase();
     const listType = String(list && list.type ? list.type : "");
-    if (listType && listType !== "mailingList") {
-      continue;
-    }
+    return (!listType || listType === "mailingList") && listName === normalized;
+  });
 
-    if (listName === normalized) {
-      return {
-        id: list.id,
-        name: list.name,
-        parentId,
-      };
-    }
+  if (!match) {
+    return null;
   }
 
-  return null;
+  return {
+    id: match.id,
+    name: match.name,
+    parentId,
+  };
 }
 
 // Creates a mailing list using the most specific API exposed by this Thunderbird build.
 async function createMailingList(parentId, listName) {
-  if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.create) {
-    const listId = await browser.addressBooks.mailingLists.create(parentId, {
+  const addressBooksApi = browser.addressBooks;
+  const mailingListsApi = addressBooksApi && addressBooksApi.mailingLists;
+
+  if (mailingListsApi && mailingListsApi.create) {
+    const listId = await mailingListsApi.create(parentId, {
       name: listName,
     });
     return {
@@ -261,8 +275,11 @@ async function createMailingList(parentId, listName) {
 
 // Deletes an existing mailing list when overwrite is confirmed.
 async function deleteExistingMailingList(listId) {
-  if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.delete) {
-    await browser.addressBooks.mailingLists.delete(listId);
+  const addressBooksApi = browser.addressBooks;
+  const mailingListsApi = addressBooksApi && addressBooksApi.mailingLists;
+
+  if (mailingListsApi && mailingListsApi.delete) {
+    await mailingListsApi.delete(listId);
     return;
   }
 
@@ -287,10 +304,17 @@ async function addContactToList(listId, recipient) {
     .replace(/\n/g, "\\n");
   const safeEmail = String(recipient.address).trim();
 
-  const contactsApi = browser.addressBooks && browser.addressBooks.contacts;
-  const mailingListsApi = browser.addressBooks && browser.addressBooks.mailingLists;
+  const addressBooksApi = browser.addressBooks;
+  const contactsApi = addressBooksApi && addressBooksApi.contacts;
+  const mailingListsApi = addressBooksApi && addressBooksApi.mailingLists;
 
-  if (contactsApi && contactsApi.create && mailingListsApi && mailingListsApi.get && mailingListsApi.addMember) {
+  if (
+    contactsApi &&
+    contactsApi.create &&
+    mailingListsApi &&
+    mailingListsApi.get &&
+    mailingListsApi.addMember
+  ) {
     const listNode = await mailingListsApi.get(listId);
     if (!listNode || !listNode.parentId) {
       throw new Error("Unable to resolve mailing list parent address book.");
@@ -302,7 +326,12 @@ async function addContactToList(listId, recipient) {
     return;
   }
 
-  if (browser.contacts && browser.contacts.create && browser.mailingLists && browser.mailingLists.addMember) {
+  if (
+    browser.contacts &&
+    browser.contacts.create &&
+    browser.mailingLists &&
+    browser.mailingLists.addMember
+  ) {
     let parentId = null;
     if (browser.mailingLists.get) {
       const listNode = await browser.mailingLists.get(listId);
@@ -345,9 +374,12 @@ async function addContactToList(listId, recipient) {
 
 // Verifies list creation by querying either direct list APIs or address book trees.
 async function verifyListCreated(listId) {
-  if (browser.addressBooks && browser.addressBooks.mailingLists && browser.addressBooks.mailingLists.get) {
+  const addressBooksApi = browser.addressBooks;
+  const mailingListsApi = addressBooksApi && addressBooksApi.mailingLists;
+
+  if (mailingListsApi && mailingListsApi.get) {
     try {
-      const list = await browser.addressBooks.mailingLists.get(listId);
+      const list = await mailingListsApi.get(listId);
       return Boolean(list && list.id);
     } catch (_error) {
       return false;
@@ -355,14 +387,10 @@ async function verifyListCreated(listId) {
   }
 
   const books = await listAddressBooks();
-  for (const book of books) {
+  return books.some((book) => {
     const mailingLists = Array.isArray(book.mailingLists) ? book.mailingLists : [];
-    if (mailingLists.some((item) => item.id === listId)) {
-      return true;
-    }
-  }
-
-  return false;
+    return mailingLists.some((item) => item.id === listId);
+  });
 }
 
 // Checks whether any selected/displated message context is available.
@@ -401,7 +429,11 @@ async function getSelectedOrDisplayedMessages() {
       }
     }
 
-    if (messages.length === 0 && browser.messageDisplay && browser.messageDisplay.getDisplayedMessage) {
+    if (
+      messages.length === 0 &&
+      browser.messageDisplay &&
+      browser.messageDisplay.getDisplayedMessage
+    ) {
       const displayedMessage = await browser.messageDisplay.getDisplayedMessage(tab.id);
       if (displayedMessage && displayedMessage.id) {
         messages.push(displayedMessage);
@@ -409,11 +441,11 @@ async function getSelectedOrDisplayedMessages() {
     }
 
     const uniqueById = new Map();
-    for (const message of messages) {
+    messages.forEach((message) => {
       if (message && message.id && !uniqueById.has(message.id)) {
         uniqueById.set(message.id, message);
       }
-    }
+    });
 
     return Array.from(uniqueById.values());
   } catch (_error) {
@@ -423,30 +455,31 @@ async function getSelectedOrDisplayedMessages() {
 
 // Aggregates To/CC/BCC recipients across all selected messages.
 async function extractRecipients(messages) {
-  const parsed = [];
-  for (const message of messages) {
-    if (!message || !message.id) {
-      continue;
-    }
+  const expanded = [];
+  const fullMessages = await Promise.all(
+    messages
+      .filter((message) => message && message.id)
+      .map((message) => browser.messages.getFull(message.id))
+  );
 
-    const fullMessage = await browser.messages.getFull(message.id);
+  fullMessages.forEach((fullMessage) => {
     const headers = fullMessage && fullMessage.headers ? fullMessage.headers : {};
     const toHeaders = Array.isArray(headers.to) ? headers.to : [];
     const ccHeaders = Array.isArray(headers.cc) ? headers.cc : [];
     const bccHeaders = Array.isArray(headers.bcc) ? headers.bcc : [];
 
-    for (const header of [...toHeaders, ...ccHeaders, ...bccHeaders]) {
+    [...toHeaders, ...ccHeaders, ...bccHeaders].forEach((header) => {
       const entries = splitMailboxHeader(String(header));
-      for (const entry of entries) {
+      entries.forEach((entry) => {
         const recipient = parseAddressEntry(entry);
         if (recipient) {
-          parsed.push(recipient);
+          expanded.push(recipient);
         }
-      }
-    }
-  }
+      });
+    });
+  });
 
-  return normalizeUniqueRecipients(parsed);
+  return normalizeUniqueRecipients(expanded);
 }
 
 // Entry point for toolbar button clicks.
@@ -467,11 +500,20 @@ async function onToolbarClicked() {
     }
 
     const recipients = await extractRecipients(selectedMessages);
+    const books = await listAddressBooks();
+    const addressBookOptions = toAddressBookOptions(books);
+    if (addressBookOptions.length === 0) {
+      await notify("no-writable-address-book", "No writable address book is available.");
+      return;
+    }
+
     const contextToken = generateContextToken();
     pendingContexts.set(contextToken, {
       messageIds: selectedMessages.map((message) => message.id),
       recipients,
       selectedRecipients: [],
+      addressBookOptions,
+      selectedAddressBookId: addressBookOptions[0].id,
       createdAt: Date.now(),
       windowId: null,
     });
@@ -489,7 +531,10 @@ async function onToolbarClicked() {
       pendingContexts.set(contextToken, context);
     }
   } catch (error) {
-    await notify("mailing-list-error", `Unable to open Mailing List window: ${error.message || String(error)}`);
+    await notify(
+      "mailing-list-error",
+      `Unable to open Mailing List window: ${error.message || String(error)}`
+    );
   }
 }
 
@@ -517,12 +562,16 @@ async function createMailingListFromSelection(request) {
   );
 
   const books = await listAddressBooks();
-  const targetBook = pickWritableAddressBook(books);
+  const requestedAddressBookId = String(request.addressBookId || "");
+  const targetBook = requestedAddressBookId
+    ? books.find((book) => book && book.id === requestedAddressBookId && !book.readOnly) || null
+    : pickWritableAddressBook(books);
+
   if (!targetBook || !targetBook.id) {
     return {
       ok: false,
       code: "NO_ADDRESS_BOOK",
-      message: "Error Creating Mailing List: No writable address book found.",
+      message: "Error Creating Mailing List: Selected address book is not writable or unavailable.",
     };
   }
 
@@ -562,11 +611,12 @@ async function createMailingListFromSelection(request) {
     };
   }
 
-  for (const recipient of selectedRecipients) {
-    await addContactToList(createdList.id, recipient);
-  }
+  await Promise.all(
+    selectedRecipients.map((recipient) => addContactToList(createdList.id, recipient))
+  );
 
   context.selectedRecipients = selectedRecipients;
+  context.selectedAddressBookId = targetBook.id;
   pendingContexts.set(contextToken, context);
 
   return {
@@ -579,11 +629,11 @@ async function createMailingListFromSelection(request) {
 
 // Ensures popup context is removed if user closes the popup window.
 browser.windows.onRemoved.addListener((windowId) => {
-  for (const [contextToken, context] of pendingContexts.entries()) {
+  pendingContexts.forEach((context, contextToken) => {
     if (context.windowId === windowId) {
       pendingContexts.delete(contextToken);
     }
-  }
+  });
 });
 
 // Runtime message router for popup -> background requests.
@@ -603,6 +653,8 @@ browser.runtime.onMessage.addListener((message) => {
       ok: true,
       recipients: context.recipients,
       selectedCount: context.selectedRecipients.length,
+      addressBooks: context.addressBookOptions || [],
+      selectedAddressBookId: context.selectedAddressBookId || "",
     });
   }
 

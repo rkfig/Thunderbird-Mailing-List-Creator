@@ -44,12 +44,12 @@ Auditor: GitHub Copilot
 ### MEDIUM-1: Final "open new mailing list for review" behavior is not guaranteed to open that specific list
 - Checklist area: 4) Required Functional Behavior
 - Requirement intent: Open the new mailing list for review.
-- Current implementation: Attempts addressBooks.openUI(createdList.id), then falls back to notification.
+- Current implementation at the time of this audit: attempted addressBooks.openUI(createdList.id), then fell back to notification.
 - Evidence:
   - src/background/main.js lines 344-360
 - Impact:
   - Depending on API behavior, UI may open address book generally or only show notification; the specific list may not auto-open.
-- Recommended remediation:
+- Recommended remediation at the time:
   - Implement deterministic review opening path if API supports deep-linking/selecting a list.
   - Otherwise keep notification fallback and mark this checklist item as Partial by design.
 
@@ -95,7 +95,7 @@ Date: 2026-08-15
 - HIGH-2: Accepted deviation by project owner
   - Checkboxes are explicitly accepted instead of radio buttons.
 - MEDIUM-1: Accepted deviation by project owner
-  - Notification fallback is explicitly accepted instead of guaranteed auto-open to a specific list.
+-  - Notification fallback was explicitly accepted instead of guaranteed auto-open to a specific list.
 - LOW-1: Resolved
   - Removed remaining innerHTML usage in recipient dialog renderer.
   - Evidence: src/ui/recipient-dialog/index.js renderRecipients.
@@ -107,3 +107,6 @@ Date: 2026-08-15
 - Complete Linux test matrix items 5 and 6 (empty-name and special-character validation).
 - Run Windows/macOS smoke tests if available.
 - Perform final permission least-privilege audit before release.
+
+### Historical Note
+- The options page and temporary review-opening helper were later removed in favor of the address-book selection flow.

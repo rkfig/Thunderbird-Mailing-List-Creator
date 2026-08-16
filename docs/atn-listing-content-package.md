@@ -10,7 +10,7 @@ Mailing List Creator
 
 ## 2) Short Summary
 
-Create Thunderbird mailing lists from the To and CC recipients of selected messages.
+Create Thunderbird mailing lists from the To, CC, and BCC recipients of selected messages while choosing the destination address book.
 
 ## 3) Full Description
 
@@ -19,12 +19,14 @@ Mailing List Creator helps you quickly build a new mailing list from recipients 
 How it works:
 1. Select one or more messages in Thunderbird.
 2. Click the Mailing List toolbar action.
-3. Review To/CC/BCC recipients and choose which ones to include.
-4. Enter a mailing list name and create the list.
+3. Choose the destination address book.
+4. Review To/CC/BCC recipients and choose which ones to include.
+5. Enter a mailing list name and create the list.
 
 Behavior details:
 - If no message is selected, the add-on shows a notification and does not proceed.
-- Recipients are collected from message headers (To and CC only).
+- Recipients are collected from message headers (To, CC, and BCC).
+- Recipients are collected from message headers (To, CC, and BCC).
 - Duplicate recipient addresses are removed.
 - If a list name already exists, you can cancel or explicitly confirm overwrite.
 
@@ -60,9 +62,10 @@ Homepage URL:
 
 Required screenshots to capture before upload:
 1. Toolbar action visible in Thunderbird UI.
-2. Recipient dialog open with selected recipients list.
-3. Name entry and create action state.
-4. Success state (created message and/or review notification).
+2. Recipient dialog open with address-book dropdown visible.
+3. Recipient dialog open with selected recipients list.
+4. Name entry and create action state.
+5. Success state (created message and/or review notification).
 
 Capture guidance:
 - Avoid personal email addresses in screenshots.
@@ -74,9 +77,10 @@ Capture guidance:
 Quick test flow for reviewers:
 1. Select one or more messages.
 2. Click Mailing List toolbar action.
-3. Verify To/CC/BCC recipients appear and are selected by default.
-4. Enter a unique list name and create list.
-5. Confirm list is created and members are added.
+3. Verify the address-book dropdown appears and defaults to a writable address book.
+4. Verify To/CC/BCC recipients appear and are selected by default.
+5. Enter a unique list name and create list.
+6. Confirm list is created and members are added in the selected address book.
 
 Expected validation behavior:
 - Empty list name shows an explicit validation message.

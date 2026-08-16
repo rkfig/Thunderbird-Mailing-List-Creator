@@ -50,7 +50,8 @@ label {
   font-weight: 600;
 }
 
-input[type="text"] {
+input[type="text"],
+select {
   width: 100%;
   padding: 10px;
   border: 1px solid #94a3b8;

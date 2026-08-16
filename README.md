@@ -15,6 +15,7 @@ Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
 - Prevents action when no message is selected
 - Aggregates To/CC/BCC recipients from selected messages
 - Lets the user choose which recipients to include
+- Lets the user choose the destination address book during creation
 - Creates or overwrites mailing lists after confirmation
 
 ## Development Layout

@@ -16,6 +16,8 @@
 
 let contextToken = "";
 let recipients = [];
+let addressBooks = [];
+let selectedAddressBookId = "";
 let isCreating = false;
 
 // Reads the background-issued context token from the popup URL.
@@ -34,6 +36,36 @@ function updateSummary() {
 // Shows user-facing status and error messages.
 function setStatus(message) {
   document.getElementById("statusMessage").textContent = message;
+}
+
+// Draws address book options for the current create operation.
+function renderAddressBooks() {
+  const select = document.getElementById("addressBookSelect");
+  while (select.firstChild) {
+    select.removeChild(select.firstChild);
+  }
+
+  if (addressBooks.length === 0) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No writable address books available";
+    select.appendChild(option);
+    select.disabled = true;
+    return;
+  }
+
+  addressBooks.forEach((book) => {
+    const option = document.createElement("option");
+    option.value = book.id;
+    option.textContent = book.name;
+    select.appendChild(option);
+  });
+
+  if (selectedAddressBookId) {
+    select.value = selectedAddressBookId;
+  }
+
+  select.disabled = false;
 }
 
 // Prevents duplicate submissions while create flow is in progress.
@@ -72,7 +104,9 @@ function renderRecipients() {
     checkbox.checked = true;
     checkbox.addEventListener("change", updateSummary);
 
-    const displayName = recipient.name ? `${recipient.name} <${recipient.address}>` : recipient.address;
+    const displayName = recipient.name
+      ? `${recipient.name} <${recipient.address}>`
+      : recipient.address;
     const text = document.createElement("span");
     text.className = "recipient-text";
     text.textContent = displayName;
@@ -108,6 +142,8 @@ async function loadContext() {
   }
 
   recipients = Array.isArray(response.recipients) ? response.recipients : [];
+  addressBooks = Array.isArray(response.addressBooks) ? response.addressBooks : [];
+  selectedAddressBookId = String(response.selectedAddressBookId || "");
 }
 
 // Orchestrates create flow including duplicate-name overwrite confirmations.
@@ -120,17 +156,27 @@ async function onCreateClicked() {
   setStatus("");
   const listName = document.getElementById("listName").value.trim();
   const selectedRecipients = getSelectedRecipients();
+  const addressBookId = document.getElementById("addressBookSelect").value;
+
+  if (!addressBookId) {
+    setStatus("Select an address book.");
+    setCreateInProgress(false);
+    return;
+  }
 
   let response = await browser.runtime.sendMessage({
     type: "createMailingList",
     contextToken,
     listName,
+    addressBookId,
     selectedRecipients,
     overwriteExisting: false,
   });
 
   if (response && response.code === "LIST_EXISTS") {
-    const overwrite = window.confirm("A list with that name already exists. Do you want to overwrite it?");
+    const overwrite = window.confirm(
+      "A list with that name already exists. Do you want to overwrite it?"
+    );
     if (!overwrite) {
       setStatus("Please enter a different mailing list name.");
       return;
@@ -146,6 +192,7 @@ async function onCreateClicked() {
       type: "createMailingList",
       contextToken,
       listName,
+      addressBookId,
       selectedRecipients,
       overwriteExisting: true,
     });
@@ -185,6 +232,7 @@ async function init() {
 
   try {
     await loadContext();
+    renderAddressBooks();
     renderRecipients();
   } catch (error) {
     setStatus(error.message || "Unable to load recipients.");
