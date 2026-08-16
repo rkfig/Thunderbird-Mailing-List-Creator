@@ -1,6 +1,6 @@
 # Mailing List Creator
 
-Thunderbird MailExtension for creating a mailing list from the To and CC recipients of one or more selected messages.
+Thunderbird MailExtension for creating a mailing list from the To, CC, and BCC recipients of one or more selected messages.
 
 Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
 
