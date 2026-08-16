@@ -3,7 +3,8 @@
 Date: 2026-08-15
 
 ## Required Environment
-- Thunderbird 153.0 (64 bit)
+- Thunderbird 70.0 or newer (minimum supported)
+- Thunderbird 153.0 (64 bit) recommended for parity with recorded validation
 - Linux primary validation target
 
 ## Core Functional Tests
