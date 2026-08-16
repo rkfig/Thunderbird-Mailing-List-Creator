@@ -42,7 +42,7 @@ Project: Mailing List Creator
 - [x] Done - Package artifact can be built from extension root only
 - [x] Done - Dist folder ignored by git
 - [x] Done - Local XPI package built at dist/mailing-list-creator-2.0.0.xpi
-- [ ] Pending - Build final submission XPI after metadata freeze if metadata changes
+- [x] Done - Built updated submission XPI at dist/mailing-list-creator-2.0.0.xpi
 
 ## Mozilla Submission
 - [x] Done - Create or choose GitHub repository
