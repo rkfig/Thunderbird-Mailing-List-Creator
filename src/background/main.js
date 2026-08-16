@@ -1,10 +1,12 @@
 /*
- * Mailing List Creator - Background Script
- *
- * Purpose:
- * Coordinates toolbar actions, selected-message recipient extraction,
- * mailing list creation, overwrite handling, and contact population.
- *
+ * Add-on: Mailing List Creator
+ * File: src/background/main.js
+ * Manifest Version: 2
+ * Header Data Scope: Incoming message headers (To/CC) via messagesRead
+ * Permission Basis: messagesRead, addressBooks, notifications, storage
+ * Compose Permission Note: compose is not required for this incoming-header workflow
+ * Purpose: Coordinates toolbar actions, selected-message recipient extraction,
+ *          mailing list creation, overwrite handling, and contact population.
  * Author: Ryan Figgins
  * Author Email Address: mailing-list-creator@rkfig.com
  */
