@@ -1,10 +1,12 @@
 /*
- * Mailing List Creator - Recipient Dialog Script
- *
- * Purpose:
- * Renders recipient choices, validates user interaction state,
- * and coordinates create/overwrite requests with the background script.
- *
+ * Add-on: Mailing List Creator
+ * File: src/ui/recipient-dialog/index.js
+ * Manifest Version: 2
+ * Header Data Scope: Incoming message headers rendered for recipient selection
+ * Permission Basis: messagesRead (background fetch), addressBooks (create flow), storage (settings)
+ * Compose Permission Note: compose is not required for this incoming-header workflow
+ * Purpose: Renders recipient choices, validates user interaction state,
+ *          and coordinates create/overwrite requests with the background script.
  * Author: Ryan Figgins
  * Author Email Address: mailing-list-creator@rkfig.com
  */

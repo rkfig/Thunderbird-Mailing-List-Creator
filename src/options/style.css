@@ -1,6 +1,10 @@
 /*
- * Mailing List Creator - Options Styles
- *
+ * Add-on: Mailing List Creator
+ * File: src/options/style.css
+ * Manifest Version: 2
+ * Header Data Scope: Options page presentation layer
+ * Permission Basis: N/A (presentation layer only)
+ * Compose Permission Note: compose is not required for this incoming-header workflow
  * Purpose: Layout and visual styling for extension options page.
  * Author: Ryan Figgins
  * Author Email Address: mailing-list-creator@rkfig.com

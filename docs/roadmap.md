@@ -19,3 +19,4 @@
 - Manual test checklist: tests/manual-test-matrix.md
 - Manual test results: tests/manual-test-results-2026-08-15.md
 - Compatibility alert workflow: docs/compatibility-alert.md and docs/compatibility-acknowledgment.md
+- Mozilla/Thunderbird compliance checklist: docs/mozilla-thunderbird-compliance-checklist.md

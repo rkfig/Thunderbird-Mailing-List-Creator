@@ -1,9 +1,11 @@
 /*
- * Mailing List Creator - Options Script
- *
- * Purpose:
- * Persists and restores development-time behavior flags for this extension.
- *
+ * Add-on: Mailing List Creator
+ * File: src/options/index.js
+ * Manifest Version: 2
+ * Header Data Scope: Runtime settings for mailing-list review behavior
+ * Permission Basis: storage
+ * Compose Permission Note: compose is not required for this incoming-header workflow
+ * Purpose: Persists and restores development-time behavior flags for this extension.
  * Author: Ryan Figgins
  * Author Email Address: mailing-list-creator@rkfig.com
  */

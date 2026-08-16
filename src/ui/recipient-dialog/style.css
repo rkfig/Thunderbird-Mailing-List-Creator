@@ -1,6 +1,10 @@
 /*
- * Mailing List Creator - Recipient Dialog Styles
- *
+ * Add-on: Mailing List Creator
+ * File: src/ui/recipient-dialog/style.css
+ * Manifest Version: 2
+ * Header Data Scope: Incoming message recipient selection styling
+ * Permission Basis: N/A (presentation layer only)
+ * Compose Permission Note: compose is not required for this incoming-header workflow
  * Purpose: Visual layout and component styling for recipient selection UI.
  * Author: Ryan Figgins
  * Author Email Address: mailing-list-creator@rkfig.com
