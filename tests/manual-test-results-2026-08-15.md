@@ -36,7 +36,7 @@ Environment notes:
 
 8. Create + verify + add recipients
 - Result: Pass
-- Notes: Mailing list creation succeeded; correct addresses were added; review notification behavior accepted.
+- Notes: Mailing list creation succeeded; correct selected addresses were added.
 
 ## Cross-Platform Smoke
 - Windows tests 2/3/8: Not run

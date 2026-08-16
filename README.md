@@ -13,17 +13,14 @@ Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
 ## Features
 - Toolbar action titled Mailing List
 - Prevents action when no message is selected
-- Aggregates To/CC recipients from selected messages
+- Aggregates To/CC/BCC recipients from selected messages
 - Lets the user choose which recipients to include
 - Creates or overwrites mailing lists after confirmation
-- Opens or notifies for post-create review
-- Provides an options page for the review-open behavior
 
 ## Development Layout
 - manifest.json: Thunderbird extension manifest
 - src/background/main.js: background workflow and Thunderbird API integration
 - src/ui/recipient-dialog/: create-list dialog UI
-- src/options/: settings UI
 - images/: extension icons
 - docs/: compliance, roadmap, and release-prep documents
 - tests/: manual validation artifacts

@@ -16,7 +16,7 @@ Date: 2026-08-15
 - Expected: recipient popup does not open.
 
 3. Selected email click
-- Select a message with To and CC recipients.
+- Select a message with To, CC, and/or BCC recipients.
 - Click Mailing List.
 - Expected: popup opens with list name input and recipients.
 
@@ -41,7 +41,6 @@ Date: 2026-08-15
 8. Create + verify + add recipients
 - Create a new unique list name.
 - Expected: list is created and recipients still selected are added.
-- Expected: review behavior happens (open UI or notification fallback).
 
 ## Cross-Platform Smoke (if available)
 - Windows Thunderbird: run tests 2, 3, and 8.

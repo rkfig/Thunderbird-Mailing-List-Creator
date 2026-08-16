@@ -4,7 +4,7 @@
  * File: src/ui/recipient-dialog/index.js
  * Manifest Version: 2
  * Header Data Scope: Incoming message headers rendered for recipient selection
- * Permission Basis: messagesRead (background fetch), addressBooks (create flow), storage (settings)
+ * Permission Basis: messagesRead (background fetch), addressBooks (create flow)
  * Compose Permission Note: compose is not required for this incoming-header workflow
  * Purpose: Renders recipient choices, validates user interaction state,
  *          and coordinates create/overwrite requests with the background script.
@@ -54,7 +54,7 @@ function renderRecipients() {
   if (recipients.length === 0) {
     const empty = document.createElement("p");
     empty.className = "empty";
-    empty.textContent = "No To/CC addresses were found in the selected email.";
+    empty.textContent = "No To/CC/BCC addresses were found in the selected email.";
     container.appendChild(empty);
     const summary = document.getElementById("recipientSummary");
     summary.textContent = "0 of 0 recipients selected";

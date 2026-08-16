@@ -3,8 +3,8 @@
  * Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
  * File: src/background/main.js
  * Manifest Version: 2
- * Header Data Scope: Incoming message headers (To/CC) via messagesRead
- * Permission Basis: messagesRead, addressBooks, notifications, storage
+ * Header Data Scope: Incoming message headers (To/CC/BCC) via messagesRead
+ * Permission Basis: messagesRead, addressBooks, notifications
  * Compose Permission Note: compose is not required for this incoming-header workflow
  * Purpose: Coordinates toolbar actions, selected-message recipient extraction,
  *          mailing list creation, overwrite handling, and contact population.
@@ -17,7 +17,6 @@
 // In-memory contexts tie popup windows to selected message data and user choices.
 const pendingContexts = new Map();
 const CONTEXT_TTL_MS = 10 * 60 * 1000;
-const OPEN_FOR_REVIEW_SETTING_KEY = "openForReviewAfterCreate";
 
 // Generates a short-lived token used to map popup interactions to one action context.
 function generateContextToken() {
@@ -366,32 +365,6 @@ async function verifyListCreated(listId) {
   return false;
 }
 
-// During active development, optionally open or notify for post-create review.
-async function openListForReviewIfSupported(createdList) {
-  const settings = await browser.storage.local.get(OPEN_FOR_REVIEW_SETTING_KEY);
-  if (settings[OPEN_FOR_REVIEW_SETTING_KEY] === false) {
-    return;
-  }
-
-  if (browser.addressBooks.openUI) {
-    try {
-      await browser.addressBooks.openUI(createdList.id);
-      return;
-    } catch (_openError) {
-      await notify(
-        "mailing-list-open-review",
-        `Mailing list \"${createdList.name}\" created. Open it in Address Book to review.`
-      );
-      return;
-    }
-  }
-
-  await notify(
-    "mailing-list-open-review",
-    `Mailing list \"${createdList.name}\" created. Open it in Address Book to review.`
-  );
-}
-
 // Checks whether any selected/displated message context is available.
 async function hasDisplayedMessage() {
   const messages = await getSelectedOrDisplayedMessages();
@@ -448,7 +421,7 @@ async function getSelectedOrDisplayedMessages() {
   }
 }
 
-// Aggregates To/CC recipients across all selected messages.
+// Aggregates To/CC/BCC recipients across all selected messages.
 async function extractRecipients(messages) {
   const parsed = [];
   for (const message of messages) {
@@ -460,8 +433,9 @@ async function extractRecipients(messages) {
     const headers = fullMessage && fullMessage.headers ? fullMessage.headers : {};
     const toHeaders = Array.isArray(headers.to) ? headers.to : [];
     const ccHeaders = Array.isArray(headers.cc) ? headers.cc : [];
+    const bccHeaders = Array.isArray(headers.bcc) ? headers.bcc : [];
 
-    for (const header of [...toHeaders, ...ccHeaders]) {
+    for (const header of [...toHeaders, ...ccHeaders, ...bccHeaders]) {
       const entries = splitMailboxHeader(String(header));
       for (const entry of entries) {
         const recipient = parseAddressEntry(entry);
@@ -594,8 +568,6 @@ async function createMailingListFromSelection(request) {
 
   context.selectedRecipients = selectedRecipients;
   pendingContexts.set(contextToken, context);
-
-  await openListForReviewIfSupported(createdList);
 
   return {
     ok: true,
