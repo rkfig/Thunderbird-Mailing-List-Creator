@@ -1,5 +1,6 @@
 /*
  * Add-on: Mailing List Creator
+ * Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
  * File: src/background/main.js
  * Manifest Version: 2
  * Header Data Scope: Incoming message headers (To/CC) via messagesRead

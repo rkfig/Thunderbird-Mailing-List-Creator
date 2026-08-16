@@ -4,6 +4,7 @@
   "description": "Create Thunderbird mailing lists from selected message recipients.",
   "version": "2.0.0",
   "author": "Ryan Figgins",
+  "homepage_url": "https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git",
   "browser_specific_settings": {
     "gecko": {
       "id": "mailing-list-creator@rkfig.com",

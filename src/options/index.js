@@ -1,5 +1,6 @@
 /*
  * Add-on: Mailing List Creator
+ * Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
  * File: src/options/index.js
  * Manifest Version: 2
  * Header Data Scope: Runtime settings for mailing-list review behavior
