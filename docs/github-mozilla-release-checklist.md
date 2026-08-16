@@ -31,8 +31,8 @@ Project: Mailing List Creator
 
 ## Validation
 - [x] Done - Linux runtime validation recorded for core flow
-- [ ] Pending - Linux validation for empty-name rule
-- [ ] Pending - Linux validation for special-character rule
+- [x] Done - Linux validation for empty-name rule
+- [x] Done - Linux validation for special-character rule
 - [ ] Pending - Windows smoke validation if available
 - [ ] Pending - macOS smoke validation if available
 

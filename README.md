@@ -27,7 +27,7 @@ Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
 - tests/: manual validation artifacts
 
 ## Local Validation
-Runtime validation completed on Thunderbird 153.0 (64 bit) on Linux for the main create-list workflow. See tests/manual-test-results-2026-08-15.md for current recorded status.
+Runtime validation completed on Thunderbird 153.0 (64 bit) on Linux for the main create-list workflow, including empty-name and special-character validation. See tests/manual-test-results-2026-08-15.md for current recorded status.
 
 ## Packaging
 Expected package root contents:
@@ -43,7 +43,7 @@ zip -r dist/mailing-list-creator-2.0.0.xpi manifest.json src images -x '*.DS_Sto
 
 ## Submission Notes
 Before Mozilla submission:
-- Complete remaining manual validations
+- Complete remaining cross-platform smoke validations if available
 
 ## Author
 Ryan Figgins

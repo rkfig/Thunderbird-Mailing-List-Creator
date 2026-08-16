@@ -39,10 +39,9 @@ No npm, yarn, pip, or other package-manager dependencies are required to build t
 
 ## Reproducible Build Steps
 
-Run from repository root:
+Run from the source package root (the folder containing manifest.json):
 
 ```bash
-cd mlc-v2
 mkdir -p dist
 rm -f dist/mailing-list-creator-2.0.0.xpi
 zip -r dist/mailing-list-creator-2.0.0.xpi manifest.json src images -x '*.DS_Store'
@@ -53,24 +52,21 @@ zip -r dist/mailing-list-creator-2.0.0.xpi manifest.json src images -x '*.DS_Sto
 Inspect archive contents:
 
 ```bash
-cd mlc-v2
 unzip -l dist/mailing-list-creator-2.0.0.xpi
 ```
 
 Compare extracted archive tree to expected package root:
 
 ```bash
-cd mlc-v2
-rm -rf /tmp/mlc-v2-xpi-check
-mkdir -p /tmp/mlc-v2-xpi-check
-unzip -q dist/mailing-list-creator-2.0.0.xpi -d /tmp/mlc-v2-xpi-check
-find /tmp/mlc-v2-xpi-check -maxdepth 2 -type f | sort
+rm -rf /tmp/mlc-xpi-check
+mkdir -p /tmp/mlc-xpi-check
+unzip -q dist/mailing-list-creator-2.0.0.xpi -d /tmp/mlc-xpi-check
+find /tmp/mlc-xpi-check -maxdepth 2 -type f | sort
 ```
 
 Optional integrity hash:
 
 ```bash
-cd mlc-v2
 sha256sum dist/mailing-list-creator-2.0.0.xpi
 ```
 

@@ -21,8 +21,8 @@ Scope: Mailing List Creator v2 (Manifest v2 Thunderbird WebExtension)
 ## 2) Permissions and Least-Privilege
 - [x] Pass - Permissions constrained to needed add-on capabilities.
   - Evidence: addressBooks, messagesRead, notifications.
-- [ ] Partial - Permissions should be re-checked before release to ensure no unused permission remains.
-  - Evidence: final release audit required after feature freeze.
+- [x] Pass - Permissions re-checked for release; no unused permission remains.
+  - Evidence: manifest.json permissions match implemented runtime behavior and options/storage paths are removed.
 
 ## 3) Thunderbird API Usage
 - [x] Pass - Mailing list creation uses Thunderbird-supported mailing list APIs with compatibility fallbacks.
@@ -39,8 +39,8 @@ Scope: Mailing List Creator v2 (Manifest v2 Thunderbird WebExtension)
   - Evidence: src/background/main.js hasDisplayedMessage and user notification path; tests/manual-test-results-2026-08-15.md.
 - [x] Pass - Recipient dialog shows To/CC/BCC addresses and default selected controls.
   - Evidence: src/ui/recipient-dialog/index.js renderRecipients.
-- [x] Partial - Name validation flow includes empty-name, special-character, parse-error cases.
-  - Evidence: src/background/main.js validateListName; tests 5 and 6 pending in tests/manual-test-results-2026-08-15.md.
+- [x] Pass - Name validation flow includes empty-name, special-character, parse-error cases.
+  - Evidence: src/background/main.js validateListName and tests/manual-test-results-2026-08-15.md.
 - [x] Pass (Accepted Deviation) - Duplicate-name overwrite confirmation implemented.
   - Evidence: src/ui/recipient-dialog/index.js confirmation flow; tests/manual-test-results-2026-08-15.md.
 - [x] Pass - List create, verify, populate, and address-book selection flow implemented.
@@ -73,7 +73,7 @@ Scope: Mailing List Creator v2 (Manifest v2 Thunderbird WebExtension)
   - Evidence: tests/manual-test-results-2026-08-15.md.
 
 ## 8) Release Readiness Gate
-- [ ] Pending - Complete remaining Linux validations (tests 5 and 6) and update results.
+- [x] Pass - Linux name validations (tests 5 and 6) completed and recorded.
 - [ ] Pending - Execute Windows/macOS smoke tests if available.
 - [x] Pass - Final permission review removed unused options/storage path.
 - [x] Pass - Address-book selection strategy confirmed in create dialog.

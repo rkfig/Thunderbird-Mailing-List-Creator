@@ -1,7 +1,7 @@
 # Compliance Audit Report
 
 Date: 2026-08-15
-Scope: Full static audit of mlc-v2 codebase against docs/mozilla-thunderbird-compliance-checklist.md
+Scope: Full static audit of the add-on source package against docs/mozilla-thunderbird-compliance-checklist.md
 Auditor: GitHub Copilot
 
 ## Summary
@@ -12,7 +12,7 @@ Auditor: GitHub Copilot
   - Medium: 2
   - Low: 1
 - Current unresolved noncompliance: 0
-  - Remaining open release gates: Linux tests 5 and 6, cross-platform smoke tests, final permission audit.
+  - Remaining open release gates: cross-platform smoke tests.
 
 ## Noncompliance Findings
 
@@ -95,7 +95,7 @@ Date: 2026-08-15
 - HIGH-2: Accepted deviation by project owner
   - Checkboxes are explicitly accepted instead of radio buttons.
 - MEDIUM-1: Accepted deviation by project owner
--  - Notification fallback was explicitly accepted instead of guaranteed auto-open to a specific list.
+  - Notification fallback was explicitly accepted instead of guaranteed auto-open to a specific list.
 - LOW-1: Resolved
   - Removed remaining innerHTML usage in recipient dialog renderer.
   - Evidence: src/ui/recipient-dialog/index.js renderRecipients.
@@ -104,9 +104,7 @@ Date: 2026-08-15
 - None.
 
 ### Remaining Open Release Gates (Non-Noncompliance)
-- Complete Linux test matrix items 5 and 6 (empty-name and special-character validation).
 - Run Windows/macOS smoke tests if available.
-- Perform final permission least-privilege audit before release.
 
 ### Historical Note
 - The options page and temporary review-opening helper were later removed in favor of the address-book selection flow.

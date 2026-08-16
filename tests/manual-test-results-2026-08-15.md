@@ -23,12 +23,12 @@ Environment notes:
 - Notes: Correct addresses were displayed and defaults allowed expected selection behavior.
 
 5. Name validation: empty
-- Result: Not run in this workspace
-- Notes: Pending explicit runtime validation with empty name input.
+- Result: Pass
+- Notes: Verified that clicking Create Mailing List with an empty name shows the expected empty-name validation message.
 
 6. Name validation: special character
-- Result: Not run in this workspace
-- Notes: Pending explicit runtime validation with invalid character input.
+- Result: Pass
+- Notes: Verified that entering an unsupported character shows the expected special-character validation message.
 
 7. Existing name flow
 - Result: Pass (after fix)
@@ -44,4 +44,4 @@ Environment notes:
 
 ## Outcome
 - Core Linux runtime validation completed for implemented flow and accepted fixes.
-- Remaining validation items: tests 5 and 6 on Linux, plus Windows/macOS smoke checks.
+- Remaining validation items: Windows/macOS smoke checks.
