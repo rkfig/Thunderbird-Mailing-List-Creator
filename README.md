@@ -2,6 +2,8 @@
 
 Thunderbird MailExtension for creating a mailing list from the To and CC recipients of one or more selected messages.
 
+Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
+
 ## Current Status
 - Target Thunderbird version: 153.0+
 - Manifest version: 2
@@ -47,8 +49,6 @@ zip -r dist/mailing-list-creator-2.0.0.xpi manifest.json src images -x '*.DS_Sto
 ## Submission Notes
 Before Mozilla submission:
 - Complete remaining manual validations
-- Add final GitHub repository URL to docs and source headers
-- Add homepage_url to manifest.json once repository URL is known
 - Review permissions one final time
 
 ## Author

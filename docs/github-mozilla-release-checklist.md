@@ -14,8 +14,8 @@ Project: Mailing List Creator
 - [x] Done - README.md created
 - [x] Done - CHANGELOG.md created
 - [x] Done - .gitignore created
-- [ ] Blocked - Add final GitHub repository URL to source headers
-- [ ] Blocked - Add final GitHub repository URL to README and manifest homepage_url
+- [x] Done - Added final GitHub repository URL to source headers
+- [x] Done - Added final GitHub repository URL to README and manifest homepage_url
 
 ## Manifest and Metadata
 - [x] Done - Manifest v2 retained for Thunderbird 153 target
@@ -25,7 +25,7 @@ Project: Mailing List Creator
 - [x] Done - Icons configured
 - [x] Done - Author field added
 - [x] Done - Add-on ID updated to controlled-domain format for publication
-- [ ] Blocked - Add homepage_url after GitHub repository URL is known
+- [x] Done - Added homepage_url using final GitHub repository URL
 
 ## Validation
 - [x] Done - Linux runtime validation recorded for core flow
@@ -42,14 +42,13 @@ Project: Mailing List Creator
 - [ ] Pending - Build final submission XPI after metadata freeze if metadata changes
 
 ## Mozilla Submission
-- [ ] Blocked - Create or choose GitHub repository
+- [x] Done - Create or choose GitHub repository
 - [ ] Blocked - Push repository to GitHub
-- [ ] Blocked - Add final repository URL to headers and docs
+- [x] Done - Add final repository URL to headers and docs
 - [ ] Blocked - Create ATN listing content and screenshots
 - [ ] Blocked - Upload signed submission package to Mozilla/ATN
 
 ## Execution Notes
 Local execution completed for all steps that do not require:
-- GitHub repository URL
 - GitHub remote creation/push destination
 - Mozilla account submission workflow
