@@ -9,7 +9,7 @@
  * Purpose: Coordinates toolbar actions, selected-message recipient extraction,
  *          mailing list creation, overwrite handling, and contact population.
  * Author: Ryan Figgins
- * Author Email Address: mailing-list-creator@rkfig.com
+ * Author Email Address: 14152271+rkfig@users.noreply.github.com
  */
 
 /* global browser */

@@ -8,7 +8,7 @@
  * Compose Permission Note: compose is not required for this incoming-header workflow
  * Purpose: Persists and restores development-time behavior flags for this extension.
  * Author: Ryan Figgins
- * Author Email Address: mailing-list-creator@rkfig.com
+ * Author Email Address: 14152271+rkfig@users.noreply.github.com
  */
 
 /* global browser, document, window */

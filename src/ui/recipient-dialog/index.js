@@ -9,7 +9,7 @@
  * Purpose: Renders recipient choices, validates user interaction state,
  *          and coordinates create/overwrite requests with the background script.
  * Author: Ryan Figgins
- * Author Email Address: mailing-list-creator@rkfig.com
+ * Author Email Address: 14152271+rkfig@users.noreply.github.com
  */
 
 /* global browser, window, document */
