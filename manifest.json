@@ -8,7 +8,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "mailing-list-creator@rkfig.com",
-      "strict_min_version": "153.0"
+      "strict_min_version": "70.0"
     }
   },
   "permissions": [

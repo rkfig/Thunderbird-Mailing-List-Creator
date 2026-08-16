@@ -5,7 +5,7 @@ Thunderbird MailExtension for creating a mailing list from the To, CC, and BCC r
 Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
 
 ## Current Status
-- Target Thunderbird version: 153.0+
+- Target Thunderbird version: 70.0 (minimum supported)
 - Manifest version: 2
 - Primary validated platform: Linux
 - Working checkpoint tag: working-stable-08

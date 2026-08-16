@@ -20,7 +20,7 @@ Project: Mailing List Creator
 - [x] Done - Pushed release checkpoint tags to GitHub origin
 
 ## Manifest and Metadata
-- [x] Done - Manifest v2 retained for Thunderbird 153 target
+- [x] Done - Manifest v2 retained with Thunderbird 70 minimum support
 - [x] Done - browser_specific_settings.gecko configured
 - [x] Done - Permissions reduced to current least-privilege set
 - [x] Done - Options page removed and manifest options_ui cleaned up

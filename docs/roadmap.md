@@ -1,7 +1,7 @@
 # Mailing List Creator v2 Roadmap
 
 ## Scope
-- Thunderbird 153.0 Linux target.
+- Thunderbird 70.0 minimum support; validated on Thunderbird 153.0 Linux.
 - Preserve Windows/macOS compatibility unless explicitly documented and approved.
 - Manifest v2 and Mozilla add-on guidelines.
 

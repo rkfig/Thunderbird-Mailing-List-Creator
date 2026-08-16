@@ -41,7 +41,7 @@ Data handling:
 
 ## 4) Release Notes (Version 2.0.0)
 
-- Rebuilt as a clean Thunderbird MailExtension targeting Thunderbird 153+.
+- Rebuilt as a clean Thunderbird MailExtension with minimum support for Thunderbird 70.
 - Added selected-message recipient aggregation for To/CC/BCC addresses.
 - Added recipient selection UI with default-selected entries.
 - Added mailing list create, overwrite confirmation, verification, and member population flow.
