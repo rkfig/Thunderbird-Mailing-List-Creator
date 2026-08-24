@@ -44,7 +44,16 @@ Data handling:
 - No analytics, telemetry, advertising, or tracking behavior is implemented.
 - Notifications are generated locally in Thunderbird only.
 
-## 4) Release Notes (Version 2.1.0)
+## 4) Release Notes (Version 2.3.0 Draft)
+
+Draft status: pending Thunderbird runtime validation and final packaging.
+
+- Moved preset management to the settings page (save/apply/rename/delete).
+- Added optional post-create actions (open address book view, keep dialog open, copy summary).
+- Improved Add From Address Book with per-book selected counts, remove-selected-in-view, clear-all-added, and selected-address preview.
+- Simplified the create dialog to keep recipient selection visible and focused.
+
+Legacy release note reference:
 
 - Added launch settings so the add-on can appear from the toolbar button, the Tools menu, or both.
 - Added Reply-To and sender addresses to the selectable address list.

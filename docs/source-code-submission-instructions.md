@@ -43,8 +43,8 @@ Run from the source package root (the folder containing manifest.json):
 
 ```bash
 mkdir -p dist
-rm -f dist/mailing-list-creator-2.1.0.xpi
-zip -r dist/mailing-list-creator-2.1.0.xpi manifest.json src images -x '*.DS_Store'
+rm -f dist/mailing-list-creator-2.3.0.xpi
+zip -r dist/mailing-list-creator-2.3.0.xpi manifest.json src images -x '*.DS_Store'
 ```
 
 ## Optional Verification Steps
@@ -52,7 +52,7 @@ zip -r dist/mailing-list-creator-2.1.0.xpi manifest.json src images -x '*.DS_Sto
 Inspect archive contents:
 
 ```bash
-unzip -l dist/mailing-list-creator-2.1.0.xpi
+unzip -l dist/mailing-list-creator-2.3.0.xpi
 ```
 
 Compare extracted archive tree to expected package root:
@@ -60,14 +60,14 @@ Compare extracted archive tree to expected package root:
 ```bash
 rm -rf /tmp/mlc-xpi-check
 mkdir -p /tmp/mlc-xpi-check
-unzip -q dist/mailing-list-creator-2.1.0.xpi -d /tmp/mlc-xpi-check
+unzip -q dist/mailing-list-creator-2.3.0.xpi -d /tmp/mlc-xpi-check
 find /tmp/mlc-xpi-check -maxdepth 2 -type f | sort
 ```
 
 Optional integrity hash:
 
 ```bash
-sha256sum dist/mailing-list-creator-2.1.0.xpi
+sha256sum dist/mailing-list-creator-2.3.0.xpi
 ```
 
 ## Third-Party Code and Private Dependencies

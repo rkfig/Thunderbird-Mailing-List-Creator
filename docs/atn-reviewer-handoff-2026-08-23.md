@@ -1,9 +1,9 @@
 # ATN Reviewer Handoff - 2026-08-23
 
 Project: Mailing List Creator
-Version: 2.1.0
+Version: 2.3.0
 Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
-XPI: dist/mailing-list-creator-2.1.0.xpi
+XPI: dist/mailing-list-creator-2.3.0.xpi
 
 ## Paste-Ready ATN Fields
 
@@ -97,7 +97,7 @@ Expected validation behavior:
 
 ## Submission Checklist
 
-1. Upload dist/mailing-list-creator-2.1.0.xpi.
+1. Upload dist/mailing-list-creator-2.3.0.xpi.
 2. Copy the Name, Summary, Description, Release Notes, Support, and Homepage fields from this file.
 3. Upload the four screenshots listed above.
 4. Confirm the live ATN listing matches this document before final submission.

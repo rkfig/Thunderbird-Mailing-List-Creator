@@ -84,3 +84,25 @@ Limitations:
 1. Confirm the live ATN listing fields exactly match docs/atn-listing-content-package.md.
 2. Upload the 2.1.0 XPI to ATN/Mozilla.
 3. Execute Windows/macOS smoke checks if available.
+
+## 2.3.0 In-Progress Reviewer Notes
+
+- Current state:
+  - 2.3.0 is in active development and not release-tagged.
+  - New features are implementation-complete at code level for settings-based presets, post-create actions, and picker polish.
+  - Runtime validation in Thunderbird is still pending.
+
+- Review-risk posture:
+  - No new permissions were introduced for 2.3.0 work.
+  - No network or telemetry behavior was added.
+  - Data remains local to Thunderbird APIs and storage.local.
+
+- Evidence references:
+  - docs/2.3.0-implementation-checklist.md
+  - tests/manual-test-results-2.3.0-template.md
+  - tests/manual-test-results-2026-08-23-2.3.0-dev.md
+
+- Required before submission of 2.3.0:
+  1. Execute full baseline and 2.3.0 matrix in Thunderbird.
+  2. Refresh ATN release notes to final 2.3.0 wording.
+  3. Update submission artifact names and hashes for the 2.3.0 package.

@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.3.0 (In Progress)
+- Moved preset management to the settings page (save/apply/rename/delete)
+- Added post-create action options (open address book view, keep dialog open, copy summary)
+- Improved address-book picker with per-book selected counts, remove-selected-in-view, and clear-all-added controls
+- Added source-aware picker selection persistence and compact selected-address preview in picker UI
+- Removed review-before-create gating while keeping settings-driven include/exclude filtering in the active create flow
+- Added 2.3.0 implementation checklist and test-results templates/documentation updates
+
+## 2.2.0
+- Added Add From Address Book flow with a dedicated picker window
+- Added per-address-book contact browsing with search/filter support
+- Added multi-address-book recipient selection and merge with message-derived recipients
+- Updated recipient dialog to reopen with merged recipient set after picker save
+- Updated manual test matrix coverage for address-book picker behavior
+
 ## 2.1.0
 - Added configurable launch entry points for the toolbar button, Tools menu entry, or both
 - Added success notifications after mailing list creation completes

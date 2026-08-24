@@ -18,10 +18,28 @@
 const pendingContexts = new Map();
 const CONTEXT_TTL_MS = 10 * 60 * 1000;
 const TOOLS_MENU_ITEM_ID = "mailing-list-creator-tools-menu";
+const ADDRESS_BOOK_PICKER_WINDOW_WIDTH = 860;
+const ADDRESS_BOOK_PICKER_WINDOW_HEIGHT = 700;
 const ENTRY_POINT_SETTINGS_KEY = "entryPointSettings";
+const RECIPIENT_RULE_SETTINGS_KEY = "recipientRuleSettings";
+const POST_CREATE_ACTIONS_SETTINGS_KEY = "postCreateActions";
+const RECIPIENT_PRESETS_KEY = "recipientPresets";
+const MAX_RECIPIENT_PRESETS = 25;
 const DEFAULT_ENTRY_POINT_SETTINGS = Object.freeze({
   showToolbarButton: true,
   showToolsMenuItem: false,
+});
+const DEFAULT_RECIPIENT_RULE_SETTINGS = Object.freeze({
+  enabled: false,
+  includeDomains: [],
+  excludeDomains: [],
+  excludeAddresses: [],
+  excludePrefixes: [],
+});
+const DEFAULT_POST_CREATE_ACTIONS = Object.freeze({
+  openCreatedList: false,
+  keepDialogOpen: false,
+  copySummary: false,
 });
 
 let toolsMenuRegistered = false;
@@ -44,6 +62,356 @@ function normalizeEntryPointSettings(rawSettings) {
   }
 
   return normalized;
+}
+
+function normalizePostCreateActions(rawActions) {
+  const source = rawActions && typeof rawActions === "object" ? rawActions : {};
+  return {
+    openCreatedList: Boolean(source.openCreatedList),
+    keepDialogOpen: Boolean(source.keepDialogOpen),
+    copySummary: Boolean(source.copySummary),
+  };
+}
+
+// Normalizes one string list, trims entries, and drops duplicates.
+function normalizeStringList(values, formatter) {
+  const normalized = [];
+  const seen = new Set();
+  const source = Array.isArray(values) ? values : [];
+
+  source.forEach((value) => {
+    if (typeof value !== "string") {
+      return;
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    const formatted = typeof formatter === "function" ? formatter(trimmed) : trimmed;
+    if (!formatted) {
+      return;
+    }
+
+    const key = formatted.toLowerCase();
+    if (seen.has(key)) {
+      return;
+    }
+
+    seen.add(key);
+    normalized.push(formatted);
+  });
+
+  return normalized;
+}
+
+function normalizeDomainValue(value) {
+  return String(value || "").trim().toLowerCase().replace(/^@+/, "");
+}
+
+function normalizeAddressValue(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized.includes("@") ? normalized : "";
+}
+
+function normalizePrefixValue(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+// Ensures recipient-rule settings always have a compatible schema.
+function normalizeRecipientRuleSettings(rawSettings) {
+  const source = rawSettings && typeof rawSettings === "object" ? rawSettings : {};
+  return {
+    enabled: Boolean(source.enabled),
+    includeDomains: normalizeStringList(source.includeDomains, normalizeDomainValue),
+    excludeDomains: normalizeStringList(source.excludeDomains, normalizeDomainValue),
+    excludeAddresses: normalizeStringList(source.excludeAddresses, normalizeAddressValue),
+    excludePrefixes: normalizeStringList(source.excludePrefixes, normalizePrefixValue),
+  };
+}
+
+function generatePresetId() {
+  return `preset-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function normalizeRecipientPreset(rawPreset, index) {
+  const source = rawPreset && typeof rawPreset === "object" ? rawPreset : {};
+  const name =
+    typeof source.name === "string" && source.name.trim()
+      ? source.name.trim()
+      : `Preset ${index + 1}`;
+
+  return {
+    id: typeof source.id === "string" && source.id.trim() ? source.id.trim() : generatePresetId(),
+    name,
+    rules: normalizeRecipientRuleSettings(source.rules),
+    defaultTargetAddressBookId:
+      typeof source.defaultTargetAddressBookId === "string"
+        ? source.defaultTargetAddressBookId.trim()
+        : "",
+    postCreateActions: normalizePostCreateActions(source.postCreateActions),
+  };
+}
+
+// Keeps preset list stable, de-duplicated, and bounded.
+function normalizeRecipientPresets(rawPresets) {
+  const source = Array.isArray(rawPresets) ? rawPresets : [];
+  const seenIds = new Set();
+  const normalized = [];
+
+  source.forEach((rawPreset, index) => {
+    const preset = normalizeRecipientPreset(rawPreset, index);
+    if (seenIds.has(preset.id)) {
+      preset.id = generatePresetId();
+    }
+
+    seenIds.add(preset.id);
+    normalized.push(preset);
+  });
+
+  return normalized.slice(0, MAX_RECIPIENT_PRESETS);
+}
+
+async function getRecipientRuleSettings() {
+  if (!browser.storage || !browser.storage.local || !browser.storage.local.get) {
+    return { ...DEFAULT_RECIPIENT_RULE_SETTINGS };
+  }
+
+  try {
+    const stored = await browser.storage.local.get(RECIPIENT_RULE_SETTINGS_KEY);
+    return normalizeRecipientRuleSettings(stored[RECIPIENT_RULE_SETTINGS_KEY]);
+  } catch (_error) {
+    return { ...DEFAULT_RECIPIENT_RULE_SETTINGS };
+  }
+}
+
+async function saveRecipientRuleSettings(rawSettings) {
+  const settings = normalizeRecipientRuleSettings(rawSettings);
+
+  if (browser.storage && browser.storage.local && browser.storage.local.set) {
+    await browser.storage.local.set({
+      [RECIPIENT_RULE_SETTINGS_KEY]: settings,
+    });
+  }
+
+  return settings;
+}
+
+async function getPostCreateActions() {
+  if (!browser.storage || !browser.storage.local || !browser.storage.local.get) {
+    return { ...DEFAULT_POST_CREATE_ACTIONS };
+  }
+
+  try {
+    const stored = await browser.storage.local.get(POST_CREATE_ACTIONS_SETTINGS_KEY);
+    return normalizePostCreateActions(stored[POST_CREATE_ACTIONS_SETTINGS_KEY]);
+  } catch (_error) {
+    return { ...DEFAULT_POST_CREATE_ACTIONS };
+  }
+}
+
+async function savePostCreateActions(rawActions) {
+  const actions = normalizePostCreateActions(rawActions);
+
+  if (browser.storage && browser.storage.local && browser.storage.local.set) {
+    await browser.storage.local.set({
+      [POST_CREATE_ACTIONS_SETTINGS_KEY]: actions,
+    });
+  }
+
+  return actions;
+}
+
+async function getRecipientPresets() {
+  if (!browser.storage || !browser.storage.local || !browser.storage.local.get) {
+    return [];
+  }
+
+  try {
+    const stored = await browser.storage.local.get(RECIPIENT_PRESETS_KEY);
+    return normalizeRecipientPresets(stored[RECIPIENT_PRESETS_KEY]);
+  } catch (_error) {
+    return [];
+  }
+}
+
+async function saveRecipientPresets(rawPresets) {
+  const presets = normalizeRecipientPresets(rawPresets);
+
+  if (browser.storage && browser.storage.local && browser.storage.local.set) {
+    await browser.storage.local.set({
+      [RECIPIENT_PRESETS_KEY]: presets,
+    });
+  }
+
+  return presets;
+}
+
+async function saveRecipientPreset(rawPreset) {
+  const current = await getRecipientPresets();
+  const normalized = normalizeRecipientPreset(rawPreset, current.length);
+  const existingIndex = current.findIndex((preset) => preset.id === normalized.id);
+
+  const next = [...current];
+  if (existingIndex >= 0) {
+    next[existingIndex] = normalized;
+  } else {
+    next.push(normalized);
+  }
+
+  const saved = await saveRecipientPresets(next);
+  return {
+    presets: saved,
+    preset: saved.find((item) => item.id === normalized.id) || normalized,
+  };
+}
+
+async function renameRecipientPreset(presetId, nextName) {
+  const id = String(presetId || "").trim();
+  const name = String(nextName || "").trim();
+  if (!id || !name) {
+    throw new Error("Preset id and name are required.");
+  }
+
+  const current = await getRecipientPresets();
+  const index = current.findIndex((preset) => preset.id === id);
+  if (index < 0) {
+    throw new Error("Preset not found.");
+  }
+
+  const updated = {
+    ...current[index],
+    name,
+  };
+  const next = [...current];
+  next[index] = updated;
+  const saved = await saveRecipientPresets(next);
+  return {
+    presets: saved,
+    preset: saved.find((item) => item.id === id) || updated,
+  };
+}
+
+async function deleteRecipientPreset(presetId) {
+  const id = String(presetId || "").trim();
+  if (!id) {
+    throw new Error("Preset id is required.");
+  }
+
+  const current = await getRecipientPresets();
+  const next = current.filter((preset) => preset.id !== id);
+  const saved = await saveRecipientPresets(next);
+  return {
+    presets: saved,
+    deletedId: id,
+  };
+}
+
+function recipientDomainMatches(emailDomain, candidateDomain) {
+  if (!emailDomain || !candidateDomain) {
+    return false;
+  }
+
+  return emailDomain === candidateDomain || emailDomain.endsWith(`.${candidateDomain}`);
+}
+
+function filterRecipientsByRules(recipients, rawSettings) {
+  const settings = normalizeRecipientRuleSettings(rawSettings);
+  const normalizedRecipients = normalizeUniqueRecipients(Array.isArray(recipients) ? recipients : []);
+
+  if (!settings.enabled) {
+    return normalizedRecipients;
+  }
+
+  return normalizedRecipients.filter((recipient) => {
+    if (!recipient || !recipient.address) {
+      return false;
+    }
+
+    const normalizedAddress = String(recipient.address).trim().toLowerCase();
+    const parts = normalizedAddress.split("@");
+    if (parts.length !== 2) {
+      return false;
+    }
+
+    const localPart = parts[0];
+    const domain = parts[1];
+
+    if (settings.excludeAddresses.includes(normalizedAddress)) {
+      return false;
+    }
+
+    if (settings.excludeDomains.some((candidate) => recipientDomainMatches(domain, candidate))) {
+      return false;
+    }
+
+    if (settings.excludePrefixes.some((prefix) => localPart.startsWith(prefix))) {
+      return false;
+    }
+
+    if (
+      settings.includeDomains.length > 0 &&
+      !settings.includeDomains.some((candidate) => recipientDomainMatches(domain, candidate))
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function normalizeAddressBookRecipientSelections(selections) {
+  const source = Array.isArray(selections) ? selections : [];
+  const byAddress = new Map();
+
+  source.forEach((selection) => {
+    if (!selection || !selection.address) {
+      return;
+    }
+
+    const normalizedAddress = String(selection.address).trim();
+    if (!normalizedAddress.includes("@")) {
+      return;
+    }
+
+    const key = normalizedAddress.toLowerCase();
+    if (byAddress.has(key)) {
+      return;
+    }
+
+    byAddress.set(key, {
+      name: String(selection.name || normalizedAddress).trim(),
+      address: normalizedAddress,
+      sourceAddressBookId:
+        typeof selection.sourceAddressBookId === "string" ? selection.sourceAddressBookId.trim() : "",
+    });
+  });
+
+  return Array.from(byAddress.values());
+}
+
+// Executes post-create actions as best-effort side effects.
+async function executePostCreateActions(rawActions) {
+  const actions = normalizePostCreateActions(rawActions || DEFAULT_POST_CREATE_ACTIONS);
+  const warnings = [];
+
+  if (actions.openCreatedList) {
+    if (browser.tabs && browser.tabs.create) {
+      try {
+        await browser.tabs.create({ url: "about:addressbook" });
+      } catch (error) {
+        warnings.push(`Unable to open address book view: ${error.message || String(error)}`);
+      }
+    } else {
+      warnings.push("This Thunderbird build cannot open an address book tab programmatically.");
+    }
+  }
+
+  return {
+    actions,
+    warnings,
+  };
 }
 
 async function getEntryPointSettings() {
@@ -252,6 +620,14 @@ function normalizeUniqueRecipients(recipients) {
   return Array.from(byAddress.values());
 }
 
+// Merges two recipient lists and keeps the first occurrence for duplicate emails.
+function mergeUniqueRecipients(primaryRecipients, secondaryRecipients) {
+  return normalizeUniqueRecipients([
+    ...(Array.isArray(primaryRecipients) ? primaryRecipients : []),
+    ...(Array.isArray(secondaryRecipients) ? secondaryRecipients : []),
+  ]);
+}
+
 // Clears stale popup contexts to avoid leaking in-memory state.
 function prunePendingContexts() {
   const now = Date.now();
@@ -270,6 +646,134 @@ function filterRecipientsAgainstContext(contextRecipients, selectedRecipients) {
 
   const normalized = normalizeUniqueRecipients(selectedRecipients);
   return normalized.filter((recipient) => allowed.has(recipient.address.toLowerCase()));
+}
+
+// Finds email addresses in modern or legacy contact object shapes.
+function extractContactEmails(contact) {
+  const candidates = [];
+  const properties = contact && contact.properties ? contact.properties : {};
+
+  [
+    properties.PrimaryEmail,
+    properties.SecondEmail,
+    properties.Email,
+    contact && contact.primaryEmail,
+    contact && contact.email,
+  ].forEach((value) => {
+    if (typeof value === "string" && value.trim()) {
+      candidates.push(value.trim());
+    }
+  });
+
+  const listCandidates = [properties.Emails, contact && contact.emails];
+  listCandidates.forEach((collection) => {
+    if (!Array.isArray(collection)) {
+      return;
+    }
+
+    collection.forEach((entry) => {
+      if (typeof entry === "string" && entry.trim()) {
+        candidates.push(entry.trim());
+        return;
+      }
+
+      if (entry && typeof entry === "object") {
+        const value =
+          typeof entry.value === "string"
+            ? entry.value
+            : typeof entry.email === "string"
+              ? entry.email
+              : "";
+        if (value.trim()) {
+          candidates.push(value.trim());
+        }
+      }
+    });
+  });
+
+  if (contact && typeof contact.vCard === "string") {
+    const matches = contact.vCard.match(/EMAIL[^:]*:([^\r\n]+)/gi) || [];
+    matches.forEach((line) => {
+      const value = String(line).split(":").slice(1).join(":").trim();
+      if (value) {
+        candidates.push(value);
+      }
+    });
+  }
+
+  const unique = new Map();
+  candidates.forEach((value) => {
+    const email = value.trim();
+    if (!email.includes("@")) {
+      return;
+    }
+
+    const key = email.toLowerCase();
+    if (!unique.has(key)) {
+      unique.set(key, email);
+    }
+  });
+
+  return Array.from(unique.values());
+}
+
+// Builds a user-facing contact name from available contact properties.
+function resolveContactName(contact, fallbackEmail) {
+  const properties = contact && contact.properties ? contact.properties : {};
+  const displayNameCandidates = [
+    properties.DisplayName,
+    properties.displayName,
+    contact && contact.displayName,
+    contact && contact.name,
+  ];
+
+  for (const candidate of displayNameCandidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  const firstName =
+    typeof properties.FirstName === "string"
+      ? properties.FirstName.trim()
+      : typeof properties.firstName === "string"
+        ? properties.firstName.trim()
+        : "";
+  const lastName =
+    typeof properties.LastName === "string"
+      ? properties.LastName.trim()
+      : typeof properties.lastName === "string"
+        ? properties.lastName.trim()
+        : "";
+  const combined = `${firstName} ${lastName}`.trim();
+  if (combined) {
+    return combined;
+  }
+
+  return fallbackEmail;
+}
+
+// Converts one contact object into one or more selectable recipient rows.
+function recipientsFromContact(contact) {
+  const emails = extractContactEmails(contact);
+  return emails.map((email) => ({
+    name: resolveContactName(contact, email),
+    address: email,
+  }));
+}
+
+// Filters recipients by search text in either name or address.
+function filterRecipientsByQuery(recipients, query) {
+  const trimmed = String(query || "").trim().toLowerCase();
+  if (!trimmed) {
+    return recipients;
+  }
+
+  return recipients.filter((recipient) => {
+    const name = String(recipient && recipient.name ? recipient.name : "").toLowerCase();
+    const address = String(recipient && recipient.address ? recipient.address : "").toLowerCase();
+    return name.includes(trimmed) || address.includes(trimmed);
+  });
 }
 
 // Enforces naming rules and returns user-facing validation messages.
@@ -335,6 +839,71 @@ function toAddressBookOptions(addressBooks) {
       id: book.id,
       name: String(book.name || "Unnamed Address Book"),
     }));
+}
+
+// Reduces address books for the contact-source picker and keeps read-only books.
+function toSourceAddressBookOptions(addressBooks) {
+  return addressBooks
+    .filter((book) => book && book.id)
+    .map((book) => ({
+      id: book.id,
+      name: String(book.name || "Unnamed Address Book"),
+    }));
+}
+
+// Lists contacts for one address book using modern or legacy APIs.
+async function listContactsForAddressBook(parentId) {
+  const addressBooksApi = browser.addressBooks;
+  const contactsApi = addressBooksApi && addressBooksApi.contacts;
+
+  if (contactsApi && contactsApi.list) {
+    const contacts = await contactsApi.list(parentId);
+    return Array.isArray(contacts) ? contacts : [];
+  }
+
+  if (browser.contacts && browser.contacts.list) {
+    try {
+      const contacts = await browser.contacts.list(parentId);
+      return Array.isArray(contacts) ? contacts : [];
+    } catch (_firstError) {
+      const contacts = await browser.contacts.list();
+      const allContacts = Array.isArray(contacts) ? contacts : [];
+      return allContacts.filter((contact) => contact && contact.parentId === parentId);
+    }
+  }
+
+  const books = await listAddressBooks();
+  const matched = books.find((book) => book && book.id === parentId);
+  const contacts = matched && Array.isArray(matched.contacts) ? matched.contacts : [];
+  return contacts;
+}
+
+// Opens the address-book picker popup window for one creation context.
+async function openAddressBookPickerWindow(contextToken) {
+  const context = pendingContexts.get(contextToken);
+  if (!context) {
+    throw new Error("Context unavailable.");
+  }
+
+  if (context.addressBookPickerWindowId && browser.windows && browser.windows.update) {
+    try {
+      await browser.windows.update(context.addressBookPickerWindowId, { focused: true });
+      return;
+    } catch (_error) {
+      context.addressBookPickerWindowId = null;
+      pendingContexts.set(contextToken, context);
+    }
+  }
+
+  const popupWindow = await browser.windows.create({
+    type: "popup",
+    url: `src/ui/address-book-picker/index.html?contextToken=${encodeURIComponent(contextToken)}`,
+    width: ADDRESS_BOOK_PICKER_WINDOW_WIDTH,
+    height: ADDRESS_BOOK_PICKER_WINDOW_HEIGHT,
+  });
+
+  context.addressBookPickerWindowId = popupWindow.id || null;
+  pendingContexts.set(contextToken, context);
 }
 
 // Lists mailing lists for one address book using modern or legacy APIs.
@@ -650,6 +1219,7 @@ async function launchMailingListCreator() {
     const recipients = await extractRecipients(selectedMessages);
     const books = await listAddressBooks();
     const addressBookOptions = toAddressBookOptions(books);
+    const sourceAddressBookOptions = toSourceAddressBookOptions(books);
     if (addressBookOptions.length === 0) {
       await notify("no-writable-address-book", "No writable address book is available.");
       return;
@@ -658,12 +1228,18 @@ async function launchMailingListCreator() {
     const contextToken = generateContextToken();
     pendingContexts.set(contextToken, {
       messageIds: selectedMessages.map((message) => message.id),
+      emailRecipients: recipients,
+      addressBookRecipients: [],
+      addressBookRecipientSelections: [],
       recipients,
       selectedRecipients: [],
       addressBookOptions,
+      sourceAddressBookOptions,
       selectedAddressBookId: addressBookOptions[0].id,
+      selectedSourceAddressBookId: sourceAddressBookOptions[0] ? sourceAddressBookOptions[0].id : "",
       createdAt: Date.now(),
       windowId: null,
+      addressBookPickerWindowId: null,
     });
 
     const popupWindow = await browser.windows.create({
@@ -704,10 +1280,17 @@ async function createMailingListFromSelection(request) {
   const incomingSelectedRecipients = Array.isArray(request.selectedRecipients)
     ? request.selectedRecipients
     : [];
-  const selectedRecipients = filterRecipientsAgainstContext(
-    context.recipients,
+  const combinedRecipients = mergeUniqueRecipients(
+    context.emailRecipients || context.recipients || [],
+    context.addressBookRecipients || []
+  );
+  context.recipients = combinedRecipients;
+  const selectedRecipientsRaw = filterRecipientsAgainstContext(
+    combinedRecipients,
     incomingSelectedRecipients
   );
+  const ruleSettings = await getRecipientRuleSettings();
+  const selectedRecipients = filterRecipientsByRules(selectedRecipientsRaw, ruleSettings);
 
   const books = await listAddressBooks();
   const requestedAddressBookId = String(request.addressBookId || "");
@@ -783,6 +1366,12 @@ async function createMailingListFromSelection(request) {
 // Ensures popup context is removed if user closes the popup window.
 browser.windows.onRemoved.addListener((windowId) => {
   pendingContexts.forEach((context, contextToken) => {
+    if (context.addressBookPickerWindowId === windowId) {
+      context.addressBookPickerWindowId = null;
+      pendingContexts.set(contextToken, context);
+      return;
+    }
+
     if (context.windowId === windowId) {
       pendingContexts.delete(contextToken);
     }
@@ -804,10 +1393,112 @@ browser.runtime.onMessage.addListener((message) => {
 
     return Promise.resolve({
       ok: true,
-      recipients: context.recipients,
+      recipients: mergeUniqueRecipients(
+        context.emailRecipients || context.recipients || [],
+        context.addressBookRecipients || []
+      ),
       selectedCount: context.selectedRecipients.length,
       addressBooks: context.addressBookOptions || [],
       selectedAddressBookId: context.selectedAddressBookId || "",
+    });
+  }
+
+  if (message.type === "openAddressBookPicker") {
+    const contextToken = String(message.contextToken || "");
+    return openAddressBookPickerWindow(contextToken)
+      .then(() => ({ ok: true }))
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  if (message.type === "getAddressBookPickerContext") {
+    const contextToken = String(message.contextToken || "");
+    const context = pendingContexts.get(contextToken);
+    if (!context) {
+      return Promise.resolve({ ok: false, error: "Context unavailable." });
+    }
+
+    return Promise.resolve({
+      ok: true,
+      sourceAddressBooks: context.sourceAddressBookOptions || [],
+      selectedSourceAddressBookId: context.selectedSourceAddressBookId || "",
+      selectedAddressBookRecipients: context.addressBookRecipients || [],
+      selectedAddressBookSelections: context.addressBookRecipientSelections || [],
+    });
+  }
+
+  if (message.type === "getAddressBookContacts") {
+    const contextToken = String(message.contextToken || "");
+    const context = pendingContexts.get(contextToken);
+    if (!context) {
+      return Promise.resolve({ ok: false, error: "Context unavailable." });
+    }
+
+    const requestedAddressBookId = String(message.addressBookId || "");
+    const selectedAddressBookId = requestedAddressBookId || context.selectedSourceAddressBookId;
+    if (!selectedAddressBookId) {
+      return Promise.resolve({ ok: true, contacts: [], selectedSourceAddressBookId: "" });
+    }
+
+    const knownBook = (context.sourceAddressBookOptions || []).find(
+      (book) => book.id === selectedAddressBookId
+    );
+    if (!knownBook) {
+      return Promise.resolve({ ok: false, error: "Selected address book is unavailable." });
+    }
+
+    return listContactsForAddressBook(selectedAddressBookId)
+      .then((contacts) => contacts.flatMap((contact) => recipientsFromContact(contact)))
+      .then((contacts) => normalizeUniqueRecipients(contacts))
+      .then((contacts) => filterRecipientsByQuery(contacts, message.query))
+      .then((contacts) => {
+        context.selectedSourceAddressBookId = selectedAddressBookId;
+        pendingContexts.set(contextToken, context);
+        return {
+          ok: true,
+          contacts,
+          selectedSourceAddressBookId: selectedAddressBookId,
+        };
+      })
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  if (message.type === "saveAddressBookRecipients") {
+    const contextToken = String(message.contextToken || "");
+    const context = pendingContexts.get(contextToken);
+    if (!context) {
+      return Promise.resolve({ ok: false, error: "Context unavailable." });
+    }
+
+    const incomingSelections = Array.isArray(message.recipientSelections)
+      ? message.recipientSelections
+      : Array.isArray(message.recipients)
+        ? message.recipients
+        : [];
+    const normalizedSelections = normalizeAddressBookRecipientSelections(incomingSelections);
+    const normalized = normalizeUniqueRecipients(normalizedSelections);
+
+    context.addressBookRecipients = normalized;
+    context.addressBookRecipientSelections = normalizedSelections;
+    context.recipients = mergeUniqueRecipients(
+      context.emailRecipients || context.recipients || [],
+      normalized
+    );
+
+    if (message.selectedSourceAddressBookId) {
+      context.selectedSourceAddressBookId = String(message.selectedSourceAddressBookId);
+    }
+
+    pendingContexts.set(contextToken, context);
+    return Promise.resolve({
+      ok: true,
+      recipientCount: context.recipients.length,
+      addressBookRecipientCount: context.addressBookRecipients.length,
     });
   }
 
@@ -844,6 +1535,87 @@ browser.runtime.onMessage.addListener((message) => {
   if (message.type === "saveEntryPointSettings") {
     return saveEntryPointSettings(message.settings)
       .then((settings) => ({ ok: true, settings }))
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  if (message.type === "getRecipientRuleSettings") {
+    return getRecipientRuleSettings()
+      .then((settings) => ({ ok: true, settings }))
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  if (message.type === "saveRecipientRuleSettings") {
+    return saveRecipientRuleSettings(message.settings)
+      .then((settings) => ({ ok: true, settings }))
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  if (message.type === "getPostCreateActions") {
+    return getPostCreateActions()
+      .then((actions) => ({ ok: true, actions }))
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  if (message.type === "savePostCreateActions") {
+    return savePostCreateActions(message.actions)
+      .then((actions) => ({ ok: true, actions }))
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  if (message.type === "getRecipientPresets") {
+    return getRecipientPresets()
+      .then((presets) => ({ ok: true, presets }))
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  if (message.type === "saveRecipientPreset") {
+    return saveRecipientPreset(message.preset)
+      .then((result) => ({ ok: true, presets: result.presets, preset: result.preset }))
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  if (message.type === "renameRecipientPreset") {
+    return renameRecipientPreset(message.presetId, message.name)
+      .then((result) => ({ ok: true, presets: result.presets, preset: result.preset }))
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  if (message.type === "deleteRecipientPreset") {
+    return deleteRecipientPreset(message.presetId)
+      .then((result) => ({ ok: true, presets: result.presets, deletedId: result.deletedId }))
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
+  if (message.type === "executePostCreateActions") {
+    return executePostCreateActions(message.actions)
+      .then((result) => ({ ok: true, actions: result.actions, warnings: result.warnings }))
       .catch((error) => ({
         ok: false,
         error: error && error.message ? error.message : String(error),

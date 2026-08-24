@@ -35,10 +35,15 @@
           autocomplete="off"
           placeholder="Enter Name Here"
         />
+        <p id="nameValidationMessage" class="name-validation" aria-live="assertive"></p>
       </section>
       <section>
+        <p id="rulesNote" class="rules-note">Include/Exclude rules configured in Settings are applied during creation.</p>
         <p id="recipientSummary" class="summary" aria-live="polite">Loading recipients...</p>
         <div id="recipientContainer" class="recipient-container" aria-live="polite"></div>
+        <button id="addFromAddressBookButton" class="add-from-book" type="button">
+          Add From Address Book
+        </button>
       </section>
       <div class="actions">
         <button id="createButton" type="button">Create Mailing List</button>

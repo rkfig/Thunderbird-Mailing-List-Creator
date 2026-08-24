@@ -42,8 +42,8 @@ Project: Mailing List Creator
 - [x] Done - Source-code submission instructions documented for reviewer workflow
 - [x] Done - Package artifact can be built from extension root only
 - [x] Done - Dist folder ignored by git
-- [x] Done - Build local XPI package at dist/mailing-list-creator-2.1.0.xpi
-- [x] Done - Build updated submission XPI at dist/mailing-list-creator-2.1.0.xpi
+- [x] Done - Build local XPI package at dist/mailing-list-creator-2.3.0.xpi
+- [x] Done - Build updated submission XPI at dist/mailing-list-creator-2.3.0.xpi
 - [x] Done - Record repo-side submission prep pass in docs/submission-prep-pass-2026-08-23.md
 
 ## Mozilla Submission

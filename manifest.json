@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Mailing List Creator",
   "description": "Create Thunderbird mailing lists from selected message addresses.",
-  "version": "2.1.0",
+  "version": "2.3.0",
   "author": "Ryan Figgins",
   "homepage_url": "https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git",
   "browser_specific_settings": {

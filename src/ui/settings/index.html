@@ -20,20 +20,72 @@
   </head>
   <body>
     <main>
-      <h1>Launch Options</h1>
-      <p>Choose where Mailing List Creator can be launched from.</p>
+      <h1>Mailing List Creator Settings</h1>
+      <p>Choose how Mailing List Creator behaves before and after creation.</p>
       <form id="settingsForm">
-        <label class="option-row">
-          <input id="showToolbarButton" type="checkbox" />
-          <span>Enable the toolbar button</span>
-        </label>
-        <label class="option-row">
-          <input id="showToolsMenuItem" type="checkbox" />
-          <span>Add an item to the Tools menu</span>
-        </label>
-        <p class="note">
-          At least one launch option must remain enabled. Thunderbird does not expose a runtime API to fully hide the toolbar button, so disabling it makes the button inactive instead.
-        </p>
+        <section class="section-card">
+          <h2>Launch Options</h2>
+          <label class="option-row">
+            <input id="showToolbarButton" type="checkbox" />
+            <span>Enable the toolbar button</span>
+          </label>
+          <label class="option-row">
+            <input id="showToolsMenuItem" type="checkbox" />
+            <span>Add an item to the Tools menu</span>
+          </label>
+          <p class="note">
+            At least one launch option must remain enabled. Thunderbird does not expose a runtime API to fully hide the toolbar button, so disabling it makes the button inactive instead.
+          </p>
+        </section>
+
+        <section class="section-card">
+          <h2>After Creation</h2>
+          <label class="option-row">
+            <input id="postActionOpenCreatedList" type="checkbox" />
+            <span>Open address book view after successful creation</span>
+          </label>
+          <label class="option-row">
+            <input id="postActionKeepDialogOpen" type="checkbox" />
+            <span>Keep the creation dialog open for another list</span>
+          </label>
+          <label class="option-row">
+            <input id="postActionCopySummary" type="checkbox" />
+            <span>Copy creation summary to clipboard</span>
+          </label>
+        </section>
+
+        <section class="section-card">
+          <h2>Presets</h2>
+          <label for="presetSelect">Preset Selection</label>
+          <div class="preset-row">
+            <select id="presetSelect"></select>
+            <button id="applyPresetButton" type="button">Apply</button>
+          </div>
+          <div class="preset-actions">
+            <button id="createPresetButton" type="button">Create Preset</button>
+            <button id="renamePresetButton" type="button">Rename</button>
+            <button id="deletePresetButton" type="button">Delete</button>
+          </div>
+          <p class="note">Applying a preset updates this page's Include/Exclude Rules and After Creation selections.</p>
+        </section>
+
+        <section class="section-card">
+          <h2>Include/Exclude Rules</h2>
+          <label class="option-row" for="rulesEnabled">
+            <input id="rulesEnabled" type="checkbox" />
+            <span>Enable include/exclude filtering during list creation</span>
+          </label>
+          <label for="includeDomainsInput">Include Domains (comma separated)</label>
+          <input id="includeDomainsInput" type="text" placeholder="example.com, partner.org" />
+          <label for="excludeDomainsInput">Exclude Domains (comma separated)</label>
+          <input id="excludeDomainsInput" type="text" placeholder="blocked.example.com" />
+          <label for="excludeAddressesInput">Exclude Addresses (comma separated)</label>
+          <input id="excludeAddressesInput" type="text" placeholder="user@example.com" />
+          <label for="excludePrefixesInput">Exclude Prefixes (comma separated)</label>
+          <input id="excludePrefixesInput" type="text" placeholder="no-reply, donotreply" />
+          <p class="note">When enabled, these filters are applied automatically before recipients are added to the mailing list.</p>
+        </section>
+
         <div class="actions">
           <button id="saveButton" type="submit">Save Settings</button>
         </div>

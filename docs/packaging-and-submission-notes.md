@@ -22,4 +22,4 @@ Do not include:
 5. Build a fresh XPI and install it temporarily in Thunderbird.
 
 ## Suggested Final XPI Name
-mailing-list-creator-2.1.0.xpi
+mailing-list-creator-2.3.0.xpi

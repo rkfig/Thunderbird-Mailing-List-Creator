@@ -37,15 +37,28 @@ p {
   margin: 0 0 16px;
 }
 
+.section-card {
+  margin-bottom: 14px;
+  border: 1px solid #c9d8dc;
+  border-radius: 10px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.section-card h2 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+
 .option-row {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
   margin-bottom: 12px;
-  border: 1px solid #c9d8dc;
+  border: 1px solid #d7e4e7;
   border-radius: 10px;
-  background: #ffffff;
+  background: #f8fbfc;
 }
 
 .option-row input {
@@ -56,6 +69,37 @@ p {
 .note {
   font-size: 0.95rem;
   color: #4b6368;
+}
+
+label {
+  display: block;
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+input[type="text"] {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.preset-row {
+  display: flex;
+  gap: 8px;
+}
+
+.preset-row select {
+  flex: 1;
+}
+
+.preset-actions {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .actions {

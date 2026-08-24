@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--
+      Add-on: Mailing List Creator
+      Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
+      File: src/ui/address-book-picker/index.html
+      Manifest Version: 2
+      Header Data Scope: Address-book contact selection UI
+      Permission Basis: addressBooks (contact listing), storage/messages via background context
+      Purpose: Lets users add extra addresses from one or more address books.
+      Author: Ryan Figgins
+      Author Email Address: 14152271+rkfig@users.noreply.github.com
+    -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add From Address Book</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Add From Address Book</h1>
+      <p>Select additional addresses from one or more address books.</p>
+
+      <section>
+        <label for="sourceAddressBookSelect">Address Book</label>
+        <select id="sourceAddressBookSelect"></select>
+      </section>
+
+      <section>
+        <label for="contactSearchInput">Search</label>
+        <input
+          id="contactSearchInput"
+          type="text"
+          autocomplete="off"
+          placeholder="Search by name or email"
+        />
+      </section>
+
+      <section>
+        <p id="contactSummary" class="summary" aria-live="polite">Loading contacts...</p>
+        <div class="selection-actions">
+          <button id="removeSelectedButton" type="button">Remove Selected In View</button>
+          <button id="clearAllButton" type="button">Clear All Added</button>
+        </div>
+        <div class="selection-preview">
+          <p id="selectionPreviewTitle" class="selection-preview-title">Selected addresses</p>
+          <ul id="selectionPreviewList" class="selection-preview-list"></ul>
+        </div>
+        <div id="contactContainer" class="contact-container" aria-live="polite"></div>
+      </section>
+
+      <div class="actions">
+        <button id="addSelectedButton" type="button">Add Selected</button>
+        <button id="cancelButton" type="button">Cancel</button>
+      </div>
+
+      <p id="statusMessage" class="status" aria-live="assertive"></p>
+    </main>
+    <script src="index.js"></script>
+  </body>
+</html>
