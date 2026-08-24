@@ -33,6 +33,7 @@ Project: Mailing List Creator
 - [x] Done - Linux runtime validation recorded for core flow
 - [x] Done - Linux validation for empty-name rule
 - [x] Done - Linux validation for special-character rule
+- [x] Done - Linux validation for launch settings and success notification flow
 - [ ] Pending - Windows smoke validation if available
 - [ ] Pending - macOS smoke validation if available
 
@@ -41,20 +42,21 @@ Project: Mailing List Creator
 - [x] Done - Source-code submission instructions documented for reviewer workflow
 - [x] Done - Package artifact can be built from extension root only
 - [x] Done - Dist folder ignored by git
-- [x] Done - Local XPI package built at dist/mailing-list-creator-2.0.0.xpi
-- [x] Done - Built updated submission XPI at dist/mailing-list-creator-2.0.0.xpi
+- [x] Done - Build local XPI package at dist/mailing-list-creator-2.1.0.xpi
+- [x] Done - Build updated submission XPI at dist/mailing-list-creator-2.1.0.xpi
+- [x] Done - Record repo-side submission prep pass in docs/submission-prep-pass-2026-08-23.md
 
 ## Mozilla Submission
 - [x] Done - Create or choose GitHub repository
 - [x] Done - Push repository to GitHub
 - [x] Done - Add final repository URL to headers and docs
 - [x] Done - Draft ATN listing content package in docs/atn-listing-content-package.md
-- [ ] Pending - Capture and finalize ATN screenshots
+- [x] Done - Capture and finalize ATN screenshots with private email content pixelated
 - [ ] Pending - Upload signed submission package to Mozilla/ATN
 
 ## Execution Notes
 Local execution completed for all repository-side steps.
 Final repo-side release snapshot prepared.
 Remaining work is submission-side:
-- ATN listing content and screenshots
+- live ATN field verification and ATN upload
 - Final submission upload and review workflow

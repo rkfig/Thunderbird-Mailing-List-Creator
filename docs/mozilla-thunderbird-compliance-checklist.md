@@ -1,6 +1,6 @@
 # Mozilla/Thunderbird Compliance Checklist
 
-Date: 2026-08-15
+Date: 2026-08-23
 Scope: Mailing List Creator v2 (Manifest v2 Thunderbird WebExtension)
 
 ## Status Legend
@@ -15,14 +15,14 @@ Scope: Mailing List Creator v2 (Manifest v2 Thunderbird WebExtension)
   - Evidence: manifest.json applications.gecko.id and strict_min_version are present.
 - [x] Pass - Toolbar action configured.
   - Evidence: manifest.json browser_action.default_title set to Mailing List.
-- [x] Pass - No options page is configured.
-  - Evidence: manifest.json has no options_ui block.
+- [x] Pass - Options page is configured for launch-entry preferences.
+  - Evidence: manifest.json defines options_ui.page.
 
 ## 2) Permissions and Least-Privilege
 - [x] Pass - Permissions constrained to needed add-on capabilities.
-  - Evidence: addressBooks, messagesRead, notifications.
+  - Evidence: addressBooks, messagesRead, notifications, menus, storage.
 - [x] Pass - Permissions re-checked for release; no unused permission remains.
-  - Evidence: manifest.json permissions match implemented runtime behavior and options/storage paths are removed.
+  - Evidence: manifest.json permissions match runtime behavior, including launch-entry settings and Tools menu support.
 
 ## 3) Thunderbird API Usage
 - [x] Pass - Mailing list creation uses Thunderbird-supported mailing list APIs with compatibility fallbacks.
@@ -31,24 +31,30 @@ Scope: Mailing List Creator v2 (Manifest v2 Thunderbird WebExtension)
   - Evidence: src/background/main.js addContactToList.
 - [x] Pass - Duplicate list detection is scoped to target address book and mailing list nodes.
   - Evidence: src/background/main.js findMailingListByName and listMailingListsForBook.
-- [x] Partial - Linux runtime API verification completed for core create flow; cross-platform verification still required.
-  - Evidence: tests/manual-test-results-2026-08-15.md.
+- [x] Pass - Launch entry points are configurable through storage-backed settings with compatibility fallback.
+  - Evidence: src/background/main.js entryPointSettings handling and src/ui/settings/index.js.
+- [x] Partial - Linux runtime API verification completed for current create flow; cross-platform verification still required.
+  - Evidence: tests/manual-test-results-2026-08-23.md.
 
 ## 4) Required Functional Behavior
 - [x] Pass - Button only proceeds when an email is selected/displayed.
-  - Evidence: src/background/main.js hasDisplayedMessage and user notification path; tests/manual-test-results-2026-08-15.md.
-- [x] Pass - Recipient dialog shows To/CC/BCC addresses and default selected controls.
+  - Evidence: src/background/main.js hasDisplayedMessage and user notification path; tests/manual-test-results-2026-08-23.md.
+- [x] Pass - Recipient dialog shows Reply-To/From/To/CC/BCC addresses and default selected controls.
   - Evidence: src/ui/recipient-dialog/index.js renderRecipients.
+- [x] Pass - Launch settings enforce at least one active entry point.
+  - Evidence: src/ui/settings/index.js and src/background/main.js applyEntryPointSettings.
+- [x] Pass - Success notification is shown after a mailing list is created.
+  - Evidence: src/background/main.js notify call after successful create; tests/manual-test-results-2026-08-23.md.
 - [x] Pass - Name validation flow includes empty-name, special-character, parse-error cases.
-  - Evidence: src/background/main.js validateListName and tests/manual-test-results-2026-08-15.md.
+  - Evidence: src/background/main.js validateListName and tests/manual-test-results-2026-08-23.md.
 - [x] Pass (Accepted Deviation) - Duplicate-name overwrite confirmation implemented.
-  - Evidence: src/ui/recipient-dialog/index.js confirmation flow; tests/manual-test-results-2026-08-15.md.
+  - Evidence: src/ui/recipient-dialog/index.js confirmation flow; tests/manual-test-results-2026-08-23.md.
 - [x] Pass - List create, verify, populate, and address-book selection flow implemented.
   - Evidence: src/background/main.js createMailingListFromSelection and recipient dialog addressBookSelect handling.
 
 ## 5) Security and Safe Coding Practices
 - [x] Pass - Runtime messaging used for UI/background separation.
-  - Evidence: src/ui/recipient-dialog/index.js and src/background/main.js runtime message handlers.
+  - Evidence: src/ui/recipient-dialog/index.js, src/ui/settings/index.js, and src/background/main.js runtime message handlers.
 - [x] Pass - UI rendering avoids unsafe HTML injection for recipient rows.
   - Evidence: src/ui/recipient-dialog/index.js uses createElement/textContent.
 - [x] Pass - Defensive guards for missing context, API availability, and errors.
@@ -70,12 +76,12 @@ Scope: Mailing List Creator v2 (Manifest v2 Thunderbird WebExtension)
 - [x] Pass - Manual test matrix documented.
   - Evidence: tests/manual-test-matrix.md.
 - [x] Pass - Manual results file updated with current Linux runtime outcomes.
-  - Evidence: tests/manual-test-results-2026-08-15.md.
+  - Evidence: tests/manual-test-results-2026-08-23.md.
 
 ## 8) Release Readiness Gate
 - [x] Pass - Linux name validations (tests 5 and 6) completed and recorded.
 - [ ] Pending - Execute Windows/macOS smoke tests if available.
-- [x] Pass - Final permission review removed unused options/storage path.
+- [x] Pass - Final permission review matches current options/storage/menu usage.
 - [x] Pass - Address-book selection strategy confirmed in create dialog.
 
 ## Reviewer Sign-Off

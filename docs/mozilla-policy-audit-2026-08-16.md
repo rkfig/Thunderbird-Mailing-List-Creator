@@ -29,7 +29,8 @@ Overall Result:
 - Severity: Medium
 - Policy mapping: Add-on Policies 1 (No Surprises), 2 (Content), 3 (Submission Guidelines)
 - Current state:
-  - README and ATN listing package describe behavior, but final screenshots and submission upload are still pending in release checklist.
+  - README and ATN listing package describe behavior, and current sanitized screenshots now exist in docs/screenshots/.
+  - Submission upload remains pending in the release checklist.
 - Impact:
   - Review can be delayed or rejected if listing metadata does not fully match runtime behavior and disclosure requirements.
 - Recommendation:
@@ -39,7 +40,7 @@ Overall Result:
 
 1. Least privilege permissions
 - Status: Pass
-- Evidence: manifest permissions limited to addressBooks, messagesRead, notifications.
+- Evidence: manifest permissions limited to addressBooks, messagesRead, notifications, menus, and storage, which match implemented local runtime behavior.
 
 2. No remote code execution/loading
 - Status: Pass
@@ -77,7 +78,6 @@ Overall Result:
 
 ## Process/Release Gates Still Open
 
-- Linux manual validations 5 and 6 still marked not run in tests/manual-test-results-2026-08-15.md.
 - Windows/macOS smoke checks still pending.
 - Release checklist still contains pending Mozilla submission tasks.
 
@@ -91,7 +91,7 @@ Overall Result:
 - docs/packaging-and-submission-notes.md
 - docs/github-mozilla-release-checklist.md
 - docs/mozilla-thunderbird-compliance-checklist.md
-- tests/manual-test-results-2026-08-15.md
+- tests/manual-test-results-2026-08-23.md
 - docs/atn-listing-content-package.md
 - docs/source-code-submission-instructions.md
 

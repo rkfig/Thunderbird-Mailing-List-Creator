@@ -3,8 +3,8 @@
  * Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
  * File: src/background/main.js
  * Manifest Version: 2
- * Header Data Scope: Incoming message headers (To/CC/BCC) via messagesRead
- * Permission Basis: messagesRead, addressBooks, notifications
+ * Header Data Scope: Incoming message headers (Reply-To/From/To/CC/BCC) via messagesRead
+ * Permission Basis: messagesRead, addressBooks, notifications, menus, storage
  * Compose Permission Note: compose is not required for this incoming-header workflow
  * Purpose: Coordinates toolbar actions, selected-message recipient extraction,
  *          mailing list creation, overwrite handling, and contact population.
@@ -17,6 +17,139 @@
 // In-memory contexts tie popup windows to selected message data and user choices.
 const pendingContexts = new Map();
 const CONTEXT_TTL_MS = 10 * 60 * 1000;
+const TOOLS_MENU_ITEM_ID = "mailing-list-creator-tools-menu";
+const ENTRY_POINT_SETTINGS_KEY = "entryPointSettings";
+const DEFAULT_ENTRY_POINT_SETTINGS = Object.freeze({
+  showToolbarButton: true,
+  showToolsMenuItem: false,
+});
+
+let toolsMenuRegistered = false;
+
+function normalizeEntryPointSettings(rawSettings) {
+  const source = rawSettings && typeof rawSettings === "object" ? rawSettings : {};
+  const normalized = {
+    showToolbarButton:
+      typeof source.showToolbarButton === "boolean"
+        ? source.showToolbarButton
+        : DEFAULT_ENTRY_POINT_SETTINGS.showToolbarButton,
+    showToolsMenuItem:
+      typeof source.showToolsMenuItem === "boolean"
+        ? source.showToolsMenuItem
+        : DEFAULT_ENTRY_POINT_SETTINGS.showToolsMenuItem,
+  };
+
+  if (!normalized.showToolbarButton && !normalized.showToolsMenuItem) {
+    normalized.showToolbarButton = true;
+  }
+
+  return normalized;
+}
+
+async function getEntryPointSettings() {
+  if (!browser.storage || !browser.storage.local) {
+    return { ...DEFAULT_ENTRY_POINT_SETTINGS };
+  }
+
+  try {
+    const stored = await browser.storage.local.get(ENTRY_POINT_SETTINGS_KEY);
+    return normalizeEntryPointSettings(stored[ENTRY_POINT_SETTINGS_KEY]);
+  } catch (_error) {
+    return { ...DEFAULT_ENTRY_POINT_SETTINGS };
+  }
+}
+
+async function setToolbarButtonEnabled(enabled) {
+  if (!browser.browserAction) {
+    return;
+  }
+
+  if (enabled && browser.browserAction.enable) {
+    await browser.browserAction.enable();
+    if (browser.browserAction.setTitle) {
+      await browser.browserAction.setTitle({ title: "Mailing List" });
+    }
+    return;
+  }
+
+  if (!enabled && browser.browserAction.disable) {
+    await browser.browserAction.disable();
+    if (browser.browserAction.setBadgeText) {
+      await browser.browserAction.setBadgeText({ text: "" });
+    }
+    if (browser.browserAction.setTitle) {
+      await browser.browserAction.setTitle({
+        title: "Mailing List (toolbar button disabled in add-on settings)",
+      });
+    }
+  }
+}
+
+async function syncToolsMenuItem(showToolsMenuItem) {
+  if (!browser.menus || !browser.menus.create) {
+    return false;
+  }
+
+  if (showToolsMenuItem) {
+    if (toolsMenuRegistered) {
+      return true;
+    }
+
+    try {
+      browser.menus.create({
+        id: TOOLS_MENU_ITEM_ID,
+        title: "Mailing List",
+        contexts: ["tools_menu"],
+      });
+      toolsMenuRegistered = true;
+    } catch (_error) {
+      toolsMenuRegistered = false;
+      return false;
+    }
+    return true;
+  }
+
+  if (!toolsMenuRegistered || !browser.menus.remove) {
+    return false;
+  }
+
+  try {
+    await browser.menus.remove(TOOLS_MENU_ITEM_ID);
+  } catch (_error) {
+    // Ignore remove failures; the item may not exist in older Thunderbird builds.
+  } finally {
+    toolsMenuRegistered = false;
+  }
+
+  return false;
+}
+
+async function applyEntryPointSettings(rawSettings) {
+  const requested = normalizeEntryPointSettings(rawSettings);
+  const effective = {
+    ...requested,
+    showToolsMenuItem: await syncToolsMenuItem(requested.showToolsMenuItem),
+  };
+
+  if (!effective.showToolbarButton && !effective.showToolsMenuItem) {
+    effective.showToolbarButton = true;
+  }
+
+  await setToolbarButtonEnabled(effective.showToolbarButton);
+  return effective;
+}
+
+async function saveEntryPointSettings(rawSettings) {
+  const settings = await applyEntryPointSettings(rawSettings);
+
+  if (browser.storage && browser.storage.local && browser.storage.local.set) {
+    await browser.storage.local.set({
+      [ENTRY_POINT_SETTINGS_KEY]: settings,
+    });
+  }
+
+  return settings;
+}
 
 // Generates a short-lived token used to map popup interactions to one action context.
 function generateContextToken() {
@@ -24,12 +157,25 @@ function generateContextToken() {
 }
 
 // Shows user-visible notifications for success/failure and guidance.
-function notify(id, message) {
-  return browser.notifications.create(id, {
-    type: "basic",
-    title: "Mailing List Creator",
-    message,
-  });
+async function notify(id, message) {
+  if (browser.notifications && browser.notifications.create) {
+    try {
+      await browser.notifications.create(id, {
+        type: "basic",
+        title: "Mailing List Creator",
+        message,
+      });
+      return;
+    } catch (_error) {
+      // Fall through to badge/title feedback when notifications are unavailable.
+    }
+  }
+
+  if (browser.browserAction && browser.browserAction.setBadgeText) {
+    await browser.browserAction.setBadgeBackgroundColor({ color: "#b3261e" });
+    await browser.browserAction.setBadgeText({ text: "!" });
+    await browser.browserAction.setTitle({ title: `Mailing List Creator: ${message}` });
+  }
 }
 
 // Splits a mailbox header while preserving commas inside quoted names.
@@ -453,7 +599,7 @@ async function getSelectedOrDisplayedMessages() {
   }
 }
 
-// Aggregates To/CC/BCC recipients across all selected messages.
+// Aggregates Reply-To/From/To/CC/BCC addresses across all selected messages.
 async function extractRecipients(messages) {
   const expanded = [];
   const fullMessages = await Promise.all(
@@ -464,11 +610,13 @@ async function extractRecipients(messages) {
 
   fullMessages.forEach((fullMessage) => {
     const headers = fullMessage && fullMessage.headers ? fullMessage.headers : {};
+    const replyToHeaders = Array.isArray(headers["reply-to"]) ? headers["reply-to"] : [];
+    const fromHeaders = Array.isArray(headers.from) ? headers.from : [];
     const toHeaders = Array.isArray(headers.to) ? headers.to : [];
     const ccHeaders = Array.isArray(headers.cc) ? headers.cc : [];
     const bccHeaders = Array.isArray(headers.bcc) ? headers.bcc : [];
 
-    [...toHeaders, ...ccHeaders, ...bccHeaders].forEach((header) => {
+    [...replyToHeaders, ...fromHeaders, ...toHeaders, ...ccHeaders, ...bccHeaders].forEach((header) => {
       const entries = splitMailboxHeader(String(header));
       entries.forEach((entry) => {
         const recipient = parseAddressEntry(entry);
@@ -482,8 +630,8 @@ async function extractRecipients(messages) {
   return normalizeUniqueRecipients(expanded);
 }
 
-// Entry point for toolbar button clicks.
-async function onToolbarClicked() {
+// Entry point shared by the toolbar button and the Tools menu item.
+async function launchMailingListCreator() {
   try {
     prunePendingContexts();
 
@@ -619,6 +767,11 @@ async function createMailingListFromSelection(request) {
   context.selectedAddressBookId = targetBook.id;
   pendingContexts.set(contextToken, context);
 
+  await notify(
+    `mailing-list-created-${createdList.id}`,
+    `Created "${createdList.name}" with ${selectedRecipients.length} recipients.`
+  );
+
   return {
     ok: true,
     listId: createdList.id,
@@ -684,8 +837,41 @@ browser.runtime.onMessage.addListener((message) => {
       }));
   }
 
+  if (message.type === "getEntryPointSettings") {
+    return getEntryPointSettings().then((settings) => ({ ok: true, settings }));
+  }
+
+  if (message.type === "saveEntryPointSettings") {
+    return saveEntryPointSettings(message.settings)
+      .then((settings) => ({ ok: true, settings }))
+      .catch((error) => ({
+        ok: false,
+        error: error && error.message ? error.message : String(error),
+      }));
+  }
+
   return undefined;
 });
 
+browser.menus.onClicked.addListener((info) => {
+  if (info && info.menuItemId === TOOLS_MENU_ITEM_ID) {
+    launchMailingListCreator().catch(() => undefined);
+  }
+});
+
+if (browser.storage && browser.storage.onChanged) {
+  browser.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "local" || !changes[ENTRY_POINT_SETTINGS_KEY]) {
+      return;
+    }
+
+    applyEntryPointSettings(changes[ENTRY_POINT_SETTINGS_KEY].newValue).catch(() => undefined);
+  });
+}
+
 // Register toolbar click handler.
-browser.browserAction.onClicked.addListener(onToolbarClicked);
+browser.browserAction.onClicked.addListener(launchMailingListCreator);
+
+getEntryPointSettings()
+  .then((settings) => applyEntryPointSettings(settings))
+  .catch(() => undefined);

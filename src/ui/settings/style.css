@@ -1,0 +1,84 @@
+/*
+ * Add-on: Mailing List Creator
+ * Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
+ * File: src/ui/settings/style.css
+ * Manifest Version: 2
+ * Header Data Scope: Launch entry-point preferences styling
+ * Permission Basis: none (presentation only)
+ * Purpose: Styles the add-on settings page shown in Add-ons Manager.
+ * Author: Ryan Figgins
+ * Author Email Address: 14152271+rkfig@users.noreply.github.com
+ */
+
+:root {
+  color-scheme: light;
+  font-family: "Noto Sans", "Segoe UI", sans-serif;
+  line-height: 1.4;
+}
+
+body {
+  margin: 0;
+  background: #f4f7f8;
+  color: #163238;
+}
+
+main {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
+
+p {
+  margin: 0 0 16px;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border: 1px solid #c9d8dc;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.option-row input {
+  width: 18px;
+  height: 18px;
+}
+
+.note {
+  font-size: 0.95rem;
+  color: #4b6368;
+}
+
+.actions {
+  margin-top: 20px;
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: #0f766e;
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.status {
+  min-height: 1.5em;
+  margin-top: 14px;
+  font-size: 0.95rem;
+}

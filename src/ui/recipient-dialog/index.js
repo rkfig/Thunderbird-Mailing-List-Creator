@@ -86,7 +86,7 @@ function renderRecipients() {
   if (recipients.length === 0) {
     const empty = document.createElement("p");
     empty.className = "empty";
-    empty.textContent = "No To/CC/BCC addresses were found in the selected email.";
+    empty.textContent = "No Reply-To/From/To/CC/BCC addresses were found in the selected email.";
     container.appendChild(empty);
     const summary = document.getElementById("recipientSummary");
     summary.textContent = "0 of 0 recipients selected";

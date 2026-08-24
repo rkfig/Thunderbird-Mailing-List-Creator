@@ -1,20 +1,23 @@
-# ATN Listing Content Package
+# ATN Reviewer Handoff - 2026-08-23
 
-Date: 2026-08-16
 Project: Mailing List Creator
+Version: 2.1.0
 Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
+XPI: dist/mailing-list-creator-2.1.0.xpi
 
-## 1) Add-on Name
+## Paste-Ready ATN Fields
+
+### Name
 
 Mailing List Creator
 
-## 2) Short Summary
+### Summary
 
 Create Thunderbird mailing lists from the Reply-To, From, To, CC, and BCC addresses of selected messages while choosing the destination address book.
 
-## 3) Full Description
+### Description
 
-Mailing List Creator helps you quickly build a new mailing list from recipients already present in your mailbox.
+Mailing List Creator helps you quickly build a new mailing list from addresses already present in your mailbox.
 
 You can launch it from the toolbar button, the Tools menu, or both by using the add-on settings page.
 
@@ -44,60 +47,58 @@ Data handling:
 - No analytics, telemetry, advertising, or tracking behavior is implemented.
 - Notifications are generated locally in Thunderbird only.
 
-## 4) Release Notes (Version 2.1.0)
+### Release Notes
 
 - Added launch settings so the add-on can appear from the toolbar button, the Tools menu, or both.
 - Added Reply-To and sender addresses to the selectable address list.
 - Added a success notification after a mailing list is created.
 
-## 5) Support Information
+### Support Email
 
-Support email:
-- 14152271+rkfig@users.noreply.github.com
+14152271+rkfig@users.noreply.github.com
 
-Support URL:
-- https://github.com/rkfig/Thunderbird-Mailing-List-Creator/issues
+### Support URL
 
-Homepage URL:
-- https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
+https://github.com/rkfig/Thunderbird-Mailing-List-Creator/issues
 
-## 6) Screenshot Plan (Submission Checklist)
+### Homepage URL
 
-Required screenshots to capture before upload:
+https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
+
+## Screenshots To Upload
+
+Upload these files from docs/screenshots/:
+
 1. Mailing List button and Tools menu items visible.png
 2. Extension window.png
 3. Option page in Add-On Manager.png
 4. Successful creation notification.png
 
-Capture guidance:
-- Avoid personal email addresses in screenshots.
-- Use consistent window size and clear text rendering.
-- Keep UI language consistent across all screenshots.
+Note:
+- Current screenshots have private email content pixelated.
 
-## 7) Reviewer Test Notes
+## Reviewer Test Notes
 
-Quick test flow for reviewers:
+Use this as reviewer-facing testing information if needed:
+
 1. Select one or more messages.
-2. Click Mailing List toolbar action.
+2. Click Mailing List from the toolbar button.
 3. Verify the address-book dropdown appears and defaults to a writable address book.
 4. Verify Reply-To/From/To/CC/BCC addresses appear and are selected by default.
-5. Enter a unique list name and create list.
+5. Enter a unique list name and create the list.
 6. Confirm Thunderbird shows a local success notification after creation.
-7. Confirm list is created and members are added in the selected address book.
+7. Confirm the list is created and members are added in the selected address book.
 8. Open the add-on settings and verify launch options can enable the Tools menu entry and keep at least one launch option active.
 
 Expected validation behavior:
-- Empty list name shows an explicit validation message.
-- Disallowed special characters show explicit validation message.
-- Existing list name triggers overwrite confirmation flow.
+- Empty list name shows: No Mailing List Name entered
+- Unsupported special character shows: Special Character Not Allowed: @
+- Existing list name triggers the overwrite confirmation flow
 
-## 8) Submission Form Mapping
+## Submission Checklist
 
-Use this file to fill these ATN fields:
-- Name: section 1
-- Summary: section 2
-- Description: section 3
-- Release notes: section 4
-- Support email/URL: section 5
-- Homepage: section 5
-- Screenshots: section 6
+1. Upload dist/mailing-list-creator-2.1.0.xpi.
+2. Copy the Name, Summary, Description, Release Notes, Support, and Homepage fields from this file.
+3. Upload the four screenshots listed above.
+4. Confirm the live ATN listing matches this document before final submission.
+5. If available, complete Windows/macOS smoke checks and record them separately.

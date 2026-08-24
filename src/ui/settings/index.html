@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!--
+      Add-on: Mailing List Creator
+      Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
+      File: src/ui/settings/index.html
+      Manifest Version: 2
+      Header Data Scope: Launch entry-point preferences UI
+      Permission Basis: storage (saved settings), menus (Tools menu entry)
+      Purpose: Lets the user choose whether the add-on launches from the toolbar,
+               the Tools menu, or both.
+      Author: Ryan Figgins
+      Author Email Address: 14152271+rkfig@users.noreply.github.com
+    -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mailing List Creator Settings</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Launch Options</h1>
+      <p>Choose where Mailing List Creator can be launched from.</p>
+      <form id="settingsForm">
+        <label class="option-row">
+          <input id="showToolbarButton" type="checkbox" />
+          <span>Enable the toolbar button</span>
+        </label>
+        <label class="option-row">
+          <input id="showToolsMenuItem" type="checkbox" />
+          <span>Add an item to the Tools menu</span>
+        </label>
+        <p class="note">
+          At least one launch option must remain enabled. Thunderbird does not expose a runtime API to fully hide the toolbar button, so disabling it makes the button inactive instead.
+        </p>
+        <div class="actions">
+          <button id="saveButton" type="submit">Save Settings</button>
+        </div>
+        <p id="statusMessage" class="status" aria-live="polite"></p>
+      </form>
+    </main>
+    <script src="index.js"></script>
+  </body>
+</html>
