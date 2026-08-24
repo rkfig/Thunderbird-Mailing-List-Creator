@@ -45,13 +45,13 @@ Data handling:
 - Notifications are generated locally in Thunderbird only.
 
 ## 4) Release Notes (Version 2.3.0 Draft)
-
-Draft status: pending Thunderbird runtime validation and final packaging.
-
-- Moved preset management to the settings page (save/apply/rename/delete).
+ 
+- Added settings-driven include/exclude recipient filtering for list creation.
+- Moved preset management to the settings page with create, apply, rename, and delete actions.
 - Added optional post-create actions (open address book view, keep dialog open, copy summary).
-- Improved Add From Address Book with per-book selected counts, remove-selected-in-view, clear-all-added, and selected-address preview.
+- Improved Add From Address Book with per-book selected counts, remove-selected-in-view, clear-all-added, and persisted cross-book selections.
 - Simplified the create dialog to keep recipient selection visible and focused.
+- Added inline list-name validation display for empty name and unsupported special characters.
 
 Legacy release note reference:
 
