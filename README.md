@@ -40,6 +40,9 @@ Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
 - Implementation checklist: docs/2.3.0-implementation-checklist.md
 - Manual test results template: tests/manual-test-results-2.3.0-template.md
 
+## User Documentation
+- User guide: docs/user-guide.md
+
 ## Local Validation
 Runtime validation completed on Thunderbird 153.0 (64 bit) on Linux for the 2.1.0 workflow, launch settings, and success notifications. Address-book picker validation for 2.2.0 is tracked in the manual test matrix and pending runtime execution.
 
