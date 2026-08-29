@@ -27,7 +27,12 @@
     "page": "src/ui/settings/index.html"
   },
   "browser_action": {
-    "default_title": "Mailing List"
+    "default_title": "Mailing List",
+    "default_icon": {
+      "16": "images/icon-16.svg",
+      "32": "images/icon-32.svg",
+      "64": "images/icon-64.svg"
+    }
   },
   "icons": {
     "16": "images/icon-16.svg",
