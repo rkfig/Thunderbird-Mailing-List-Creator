@@ -7,8 +7,8 @@ Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
 ## Current Status
 - Target Thunderbird version: 70.0 (minimum supported)
 - Manifest version: 2
-- Current add-on version: 2.3.0
-- 2.3.0 status: in active development (settings-based presets, post-create actions, and picker polish implemented)
+- Current add-on version: 2.3.1
+- 2.3.1 status: in active development (settings-based presets, post-create actions, and picker polish implemented)
 - Primary validated platform: Linux
 - Working checkpoint tag: working-stable-08
 
@@ -57,7 +57,7 @@ Expected package root contents:
 Suggested packaging command:
 ```bash
 mkdir -p dist
-zip -r dist/mailing-list-creator-2.3.0.xpi manifest.json src images -x '*.DS_Store'
+zip -r dist/mailing-list-creator-2.3.1.xpi manifest.json src images -x '*.DS_Store'
 ```
 
 ## Submission Notes

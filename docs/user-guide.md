@@ -1,7 +1,7 @@
 # Mailing List Creator User Guide
 
 Date: 2026-08-24
-Version: 2.3.0
+Version: 2.3.1
 
 ## What This Add-on Does
 
@@ -24,7 +24,7 @@ You can also add extra recipients from your address books before creating the li
 4. Click the gear icon.
 5. Choose Install Add-on From File....
 6. Select the XPI file, for example:
-   - dist/mailing-list-creator-2.3.0.xpi
+  - dist/mailing-list-creator-2.3.1.xpi
 7. Confirm installation when prompted.
 8. Restart Thunderbird if Thunderbird asks you to restart.
 
