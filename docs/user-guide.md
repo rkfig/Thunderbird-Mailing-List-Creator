@@ -104,9 +104,9 @@ When entering a list name:
 - Rules are configured in Settings.
 - Rules are applied when creation runs.
 - The create dialog shows a rules note only when rules are enabled.
-- The recommended default exclusion prefixes are: `noreply`, `no-reply`, `donotreply`, `mailer-daemon`, `postmaster`, `bounce`, `bounces`, `listserv`, and `listserve`.
-- These are optional and remain off unless the rule set is enabled. You can still add, remove, or override them from the settings screen.
-- When enabled, the filter is applied before recipients are added to the mailing list, but the user can still manually select excluded addresses again if needed via the recipient review step.
+- The recommended default exclusion prefixes are preloaded: `noreply`, `no-reply`, `donotreply`, `mailer-daemon`, `postmaster`, `bounce`, `bounces`, `listserv`, and `listserve`.
+- Recipient rules are enabled by default and can still be adjusted or disabled from the settings screen.
+- Excluded addresses remain visible in the recipient list, but they are not checked by default. Users may still manually select them if they want to include them in the mailing list.
 
 ## Add From Address Book Tips
 
