@@ -8,7 +8,7 @@ Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
 - Target Thunderbird version: 70.0 (minimum supported)
 - Manifest version: 2
 - Current add-on version: 2.3.2
-- 2.3.2 status: release update and documentation refresh (default system-address filtering available when recipient rules are enabled)
+- 2.3.2 status: release update and documentation refresh (recipient rules are enabled by default and recommended system-address exclusions are preloaded)
 - Primary validated platform: Linux
 - Working checkpoint tag: working-stable-08
 

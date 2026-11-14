@@ -1,8 +1,8 @@
 # Changelog
 
 ## 2.3.2
-- Added a recommended default exclusion-prefix list for obviously automated/system addresses when recipient rules are enabled.
-- Kept recipient rules optional/off by default so users can explicitly enable the filter and still adjust the list manually.
+- Added a recommended default exclusion-prefix list for obviously automated/system addresses.
+- Enabled recipient rules by default and preloaded the recommended exclusions so the filter is active immediately, while still allowing the user to adjust or disable the list.
 - Refreshed the project documentation and reviewer handoff to reflect the 2.3.2 release state.
 
 ## 2.3.0 (In Progress)
