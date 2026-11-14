@@ -21,6 +21,13 @@ let selectedAddressBookId = "";
 let isCreating = false;
 let pickerWasOpened = false;
 let currentPostCreateActions = null;
+let currentRuleSettings = {
+  enabled: true,
+  includeDomains: [],
+  excludeDomains: [],
+  excludeAddresses: [],
+  excludePrefixes: [],
+};
 
 const DEFAULT_POST_CREATE_ACTIONS = Object.freeze({
   openCreatedList: false,
@@ -61,6 +68,73 @@ function normalizePostCreateActions(rawActions) {
     keepDialogOpen: Boolean(source.keepDialogOpen),
     copySummary: Boolean(source.copySummary),
   };
+}
+
+function normalizeRuleSettings(rawSettings) {
+  const source = rawSettings && typeof rawSettings === "object" ? rawSettings : {};
+  const includeDomains = Array.isArray(source.includeDomains) ? source.includeDomains : [];
+  const excludeDomains = Array.isArray(source.excludeDomains) ? source.excludeDomains : [];
+  const excludeAddresses = Array.isArray(source.excludeAddresses) ? source.excludeAddresses : [];
+  const excludePrefixes = Array.isArray(source.excludePrefixes) ? source.excludePrefixes : [];
+
+  return {
+    enabled: source.enabled !== false,
+    includeDomains: includeDomains.map((value) => String(value || "").trim().toLowerCase()),
+    excludeDomains: excludeDomains.map((value) => String(value || "").trim().toLowerCase()),
+    excludeAddresses: excludeAddresses.map((value) => String(value || "").trim().toLowerCase()),
+    excludePrefixes: excludePrefixes.map((value) => String(value || "").trim().toLowerCase()),
+  };
+}
+
+function recipientDomainMatches(emailDomain, candidateDomain) {
+  if (!emailDomain || !candidateDomain) {
+    return false;
+  }
+
+  return emailDomain === candidateDomain || emailDomain.endsWith(`.${candidateDomain}`);
+}
+
+function filterRecipientsByRuleSettings(list, settings) {
+  const source = normalizeRuleSettings(settings);
+  if (!source.enabled) {
+    return Array.isArray(list) ? list : [];
+  }
+
+  return (Array.isArray(list) ? list : []).filter((recipient) => {
+    if (!recipient || !recipient.address) {
+      return false;
+    }
+
+    const normalizedAddress = String(recipient.address).trim().toLowerCase();
+    const parts = normalizedAddress.split("@");
+    if (parts.length !== 2) {
+      return false;
+    }
+
+    const localPart = parts[0];
+    const domain = parts[1];
+
+    if (source.excludeAddresses.includes(normalizedAddress)) {
+      return false;
+    }
+
+    if (source.excludeDomains.some((candidate) => recipientDomainMatches(domain, candidate))) {
+      return false;
+    }
+
+    if (source.excludePrefixes.some((prefix) => localPart.startsWith(prefix))) {
+      return false;
+    }
+
+    if (
+      source.includeDomains.length > 0 &&
+      !source.includeDomains.some((candidate) => recipientDomainMatches(domain, candidate))
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 }
 
 function updateSummary() {
@@ -177,8 +251,8 @@ async function loadRuleSettings() {
     throw new Error((response && response.error) || "Unable to load rule settings.");
   }
 
-  const settings = response.settings && typeof response.settings === "object" ? response.settings : {};
-  setRulesNoteVisible(Boolean(settings.enabled));
+  currentRuleSettings = normalizeRuleSettings(response.settings);
+  setRulesNoteVisible(Boolean(currentRuleSettings.enabled));
 }
 
 function onRecipientSelectionChanged() {
@@ -279,7 +353,10 @@ async function loadContext() {
     throw new Error((response && response.error) || "Failed to load recipient data.");
   }
 
-  recipients = Array.isArray(response.recipients) ? response.recipients : [];
+  recipients = filterRecipientsByRuleSettings(
+    Array.isArray(response.recipients) ? response.recipients : [],
+    currentRuleSettings
+  );
   addressBooks = Array.isArray(response.addressBooks) ? response.addressBooks : [];
   selectedAddressBookId = String(response.selectedAddressBookId || "");
 }
