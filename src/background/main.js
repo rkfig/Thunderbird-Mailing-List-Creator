@@ -29,12 +29,23 @@ const DEFAULT_ENTRY_POINT_SETTINGS = Object.freeze({
   showToolbarButton: true,
   showToolsMenuItem: false,
 });
+const DEFAULT_EXCLUDED_PREFIXES = Object.freeze([
+  "noreply",
+  "no-reply",
+  "donotreply",
+  "mailer-daemon",
+  "postmaster",
+  "bounce",
+  "bounces",
+  "listserv",
+  "listserve",
+]);
 const DEFAULT_RECIPIENT_RULE_SETTINGS = Object.freeze({
   enabled: false,
   includeDomains: [],
   excludeDomains: [],
   excludeAddresses: [],
-  excludePrefixes: [],
+  excludePrefixes: DEFAULT_EXCLUDED_PREFIXES,
 });
 const DEFAULT_POST_CREATE_ACTIONS = Object.freeze({
   openCreatedList: false,
@@ -122,12 +133,17 @@ function normalizePrefixValue(value) {
 // Ensures recipient-rule settings always have a compatible schema.
 function normalizeRecipientRuleSettings(rawSettings) {
   const source = rawSettings && typeof rawSettings === "object" ? rawSettings : {};
+  const defaulted = {
+    ...DEFAULT_RECIPIENT_RULE_SETTINGS,
+    ...source,
+  };
+
   return {
-    enabled: Boolean(source.enabled),
-    includeDomains: normalizeStringList(source.includeDomains, normalizeDomainValue),
-    excludeDomains: normalizeStringList(source.excludeDomains, normalizeDomainValue),
-    excludeAddresses: normalizeStringList(source.excludeAddresses, normalizeAddressValue),
-    excludePrefixes: normalizeStringList(source.excludePrefixes, normalizePrefixValue),
+    enabled: Boolean(defaulted.enabled),
+    includeDomains: normalizeStringList(defaulted.includeDomains, normalizeDomainValue),
+    excludeDomains: normalizeStringList(defaulted.excludeDomains, normalizeDomainValue),
+    excludeAddresses: normalizeStringList(defaulted.excludeAddresses, normalizeAddressValue),
+    excludePrefixes: normalizeStringList(defaulted.excludePrefixes, normalizePrefixValue),
   };
 }
 

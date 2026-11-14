@@ -1,9 +1,9 @@
 # ATN Reviewer Handoff - 2026-08-23
 
 Project: Mailing List Creator
-Version: 2.3.0
+Version: 2.3.2
 Repository: https://github.com/rkfig/Thunderbird-Mailing-List-Creator.git
-XPI: dist/mailing-list-creator-2.3.0.xpi
+XPI: dist/mailing-list-creator-2.3.2.xpi
 
 ## Paste-Ready ATN Fields
 
@@ -49,6 +49,7 @@ Data handling:
 
 ### Release Notes
 
+- Added the default automatic exclusion list for common system-address prefixes like `noreply`, `mailer-daemon`, and `postmaster` when recipient filtering is enabled.
 - Added launch settings so the add-on can appear from the toolbar button, the Tools menu, or both.
 - Added Reply-To and sender addresses to the selectable address list.
 - Added a success notification after a mailing list is created.

@@ -82,8 +82,15 @@
           <label for="excludeAddressesInput">Exclude Addresses (comma separated)</label>
           <input id="excludeAddressesInput" type="text" placeholder="user@example.com" />
           <label for="excludePrefixesInput">Exclude Prefixes (comma separated)</label>
-          <input id="excludePrefixesInput" type="text" placeholder="no-reply, donotreply" />
-          <p class="note">When enabled, these filters are applied automatically before recipients are added to the mailing list.</p>
+          <input
+            id="excludePrefixesInput"
+            type="text"
+            placeholder="noreply, no-reply, mailer-daemon, postmaster"
+          />
+          <p class="note">
+            Recommended defaults are preloaded when rules are enabled: noreply, no-reply,
+            donotreply, mailer-daemon, postmaster, bounce, bounces, listserv, and listserve.
+          </p>
         </section>
 
         <div class="actions">

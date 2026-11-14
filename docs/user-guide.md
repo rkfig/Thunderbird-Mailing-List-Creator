@@ -1,7 +1,7 @@
 # Mailing List Creator User Guide
 
-Date: 2026-08-24
-Version: 2.3.1
+Date: 2026-11-14
+Version: 2.3.2
 
 ## What This Add-on Does
 
@@ -24,7 +24,7 @@ You can also add extra recipients from your address books before creating the li
 4. Click the gear icon.
 5. Choose Install Add-on From File....
 6. Select the XPI file, for example:
-  - dist/mailing-list-creator-2.3.1.xpi
+  - dist/mailing-list-creator-2.3.2.xpi
 7. Confirm installation when prompted.
 8. Restart Thunderbird if Thunderbird asks you to restart.
 
@@ -104,6 +104,9 @@ When entering a list name:
 - Rules are configured in Settings.
 - Rules are applied when creation runs.
 - The create dialog shows a rules note only when rules are enabled.
+- The recommended default exclusion prefixes are: `noreply`, `no-reply`, `donotreply`, `mailer-daemon`, `postmaster`, `bounce`, `bounces`, `listserv`, and `listserve`.
+- These are optional and remain off unless the rule set is enabled. You can still add, remove, or override them from the settings screen.
+- When enabled, the filter is applied before recipients are added to the mailing list, but the user can still manually select excluded addresses again if needed via the recipient review step.
 
 ## Add From Address Book Tips
 
