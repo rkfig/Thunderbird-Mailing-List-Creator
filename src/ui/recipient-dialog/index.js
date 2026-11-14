@@ -94,47 +94,45 @@ function recipientDomainMatches(emailDomain, candidateDomain) {
   return emailDomain === candidateDomain || emailDomain.endsWith(`.${candidateDomain}`);
 }
 
-function filterRecipientsByRuleSettings(list, settings) {
+function shouldAutoExcludeRecipient(recipient, settings) {
   const source = normalizeRuleSettings(settings);
   if (!source.enabled) {
-    return Array.isArray(list) ? list : [];
+    return false;
   }
 
-  return (Array.isArray(list) ? list : []).filter((recipient) => {
-    if (!recipient || !recipient.address) {
-      return false;
-    }
-
-    const normalizedAddress = String(recipient.address).trim().toLowerCase();
-    const parts = normalizedAddress.split("@");
-    if (parts.length !== 2) {
-      return false;
-    }
-
-    const localPart = parts[0];
-    const domain = parts[1];
-
-    if (source.excludeAddresses.includes(normalizedAddress)) {
-      return false;
-    }
-
-    if (source.excludeDomains.some((candidate) => recipientDomainMatches(domain, candidate))) {
-      return false;
-    }
-
-    if (source.excludePrefixes.some((prefix) => localPart.startsWith(prefix))) {
-      return false;
-    }
-
-    if (
-      source.includeDomains.length > 0 &&
-      !source.includeDomains.some((candidate) => recipientDomainMatches(domain, candidate))
-    ) {
-      return false;
-    }
-
+  if (!recipient || !recipient.address) {
     return true;
-  });
+  }
+
+  const normalizedAddress = String(recipient.address).trim().toLowerCase();
+  const parts = normalizedAddress.split("@");
+  if (parts.length !== 2) {
+    return false;
+  }
+
+  const localPart = parts[0];
+  const domain = parts[1];
+
+  if (source.excludeAddresses.includes(normalizedAddress)) {
+    return true;
+  }
+
+  if (source.excludeDomains.some((candidate) => recipientDomainMatches(domain, candidate))) {
+    return true;
+  }
+
+  if (source.excludePrefixes.some((prefix) => localPart.startsWith(prefix))) {
+    return true;
+  }
+
+  if (
+    source.includeDomains.length > 0 &&
+    !source.includeDomains.some((candidate) => recipientDomainMatches(domain, candidate))
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function updateSummary() {
@@ -217,7 +215,10 @@ function renderRecipients(selectedEmailSet = null) {
     checkbox.className = "recipient-check";
     checkbox.value = String(index);
     const normalizedEmail = normalizeEmail(recipient.address);
-    checkbox.checked = selectedEmailSet ? selectedEmailSet.has(normalizedEmail) : true;
+    const shouldBeSelectedByDefault = selectedEmailSet
+      ? selectedEmailSet.has(normalizedEmail)
+      : !shouldAutoExcludeRecipient(recipient, currentRuleSettings);
+    checkbox.checked = shouldBeSelectedByDefault;
     checkbox.addEventListener("change", onRecipientSelectionChanged);
 
     const text = document.createElement("span");
@@ -353,10 +354,7 @@ async function loadContext() {
     throw new Error((response && response.error) || "Failed to load recipient data.");
   }
 
-  recipients = filterRecipientsByRuleSettings(
-    Array.isArray(response.recipients) ? response.recipients : [],
-    currentRuleSettings
-  );
+  recipients = Array.isArray(response.recipients) ? response.recipients : [];
   addressBooks = Array.isArray(response.addressBooks) ? response.addressBooks : [];
   selectedAddressBookId = String(response.selectedAddressBookId || "");
 }
